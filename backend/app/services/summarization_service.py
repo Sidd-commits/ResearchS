@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -23,6 +24,9 @@ from app.services.pdf_service import pdf_service
 logger = logging.getLogger("researchs.services.summarization")
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
+
+# Global GPU lock to prevent concurrent VRAM contention or race conditions
+_INFERENCE_LOCK = threading.Lock()
 
 
 class SummarizationService:
@@ -73,34 +77,35 @@ class SummarizationService:
         source_text = data["source_text"]
 
         model_key = model_type.lower().strip()
-        try:
-            if "flan" in model_key or "t5" in model_key:
-                result = flan_t5_summarizer.summarize(
-                    source_text,
-                    max_length=max_length,
-                    min_length=min_length,
-                )
-            elif "bart" in model_key:
-                result = bart_summarizer.summarize(
-                    source_text,
-                    max_length=max_length,
-                    min_length=min_length,
-                )
-            else:
-                raise ValueError(f"Unsupported model type: {model_type}. Choose 'flan-t5' or 'bart'.")
+        with _INFERENCE_LOCK:
+            try:
+                if "flan" in model_key or "t5" in model_key:
+                    result = flan_t5_summarizer.summarize(
+                        source_text,
+                        max_length=max_length,
+                        min_length=min_length,
+                    )
+                elif "bart" in model_key:
+                    result = bart_summarizer.summarize(
+                        source_text,
+                        max_length=max_length,
+                        min_length=min_length,
+                    )
+                else:
+                    raise ValueError(f"Unsupported model type: {model_type}. Choose 'flan-t5' or 'bart'.")
 
-            # Evaluate generated summary
-            eval_metrics = model_evaluator.evaluate_summary(
-                source_text=source_text,
-                summary=result["summary"],
-                latency_seconds=result["latency_seconds"],
-            )
-            result["evaluation"] = eval_metrics
-            return result
-        finally:
-            # Free memory immediately on completion
-            flan_t5_summarizer.unload_model()
-            bart_summarizer.unload_model()
+                # Evaluate generated summary
+                eval_metrics = model_evaluator.evaluate_summary(
+                    source_text=source_text,
+                    summary=result["summary"],
+                    latency_seconds=result["latency_seconds"],
+                )
+                result["evaluation"] = eval_metrics
+                return result
+            finally:
+                # Free memory immediately on completion
+                flan_t5_summarizer.unload_model()
+                bart_summarizer.unload_model()
 
     def compare_models(
         self,
@@ -120,42 +125,43 @@ class SummarizationService:
 
         logger.info(f"Running comparative inference on: {saved_filename}...")
 
-        try:
-            # 1. Run FLAN-T5
-            flan_result = flan_t5_summarizer.summarize(
-                source_text,
-                max_length=max_length,
-                min_length=min_length,
-            )
-            flan_eval = model_evaluator.evaluate_summary(
-                source_text=source_text,
-                summary=flan_result["summary"],
-                latency_seconds=flan_result["latency_seconds"],
-            )
-            flan_result["evaluation"] = flan_eval
+        with _INFERENCE_LOCK:
+            try:
+                # 1. Run FLAN-T5
+                flan_result = flan_t5_summarizer.summarize(
+                    source_text,
+                    max_length=max_length,
+                    min_length=min_length,
+                )
+                flan_eval = model_evaluator.evaluate_summary(
+                    source_text=source_text,
+                    summary=flan_result["summary"],
+                    latency_seconds=flan_result["latency_seconds"],
+                )
+                flan_result["evaluation"] = flan_eval
 
-            # Free FLAN-T5 from RAM/GPU before loading BART
-            flan_t5_summarizer.unload_model()
+                # Free FLAN-T5 from RAM/GPU before loading BART
+                flan_t5_summarizer.unload_model()
 
-            # 2. Run Meta BART
-            bart_result = bart_summarizer.summarize(
-                source_text,
-                max_length=max_length,
-                min_length=min_length,
-            )
-            bart_eval = model_evaluator.evaluate_summary(
-                source_text=source_text,
-                summary=bart_result["summary"],
-                latency_seconds=bart_result["latency_seconds"],
-            )
-            bart_result["evaluation"] = bart_eval
+                # 2. Run Meta BART
+                bart_result = bart_summarizer.summarize(
+                    source_text,
+                    max_length=max_length,
+                    min_length=min_length,
+                )
+                bart_eval = model_evaluator.evaluate_summary(
+                    source_text=source_text,
+                    summary=bart_result["summary"],
+                    latency_seconds=bart_result["latency_seconds"],
+                )
+                bart_result["evaluation"] = bart_eval
 
-            # Free BART after generation
-            bart_summarizer.unload_model()
-        except Exception:
-            flan_t5_summarizer.unload_model()
-            bart_summarizer.unload_model()
-            raise
+                # Free BART after generation
+                bart_summarizer.unload_model()
+            except Exception:
+                flan_t5_summarizer.unload_model()
+                bart_summarizer.unload_model()
+                raise
 
         # 3. Compute cross-model agreement (ROUGE similarity between FLAN-T5 and BART outputs)
         agreement_rouge = model_evaluator.compute_rouge(
