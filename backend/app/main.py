@@ -1,9 +1,11 @@
 import logging
 import os
+import re
 import shutil
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -203,6 +205,61 @@ def search_arxiv(query: str = Query(..., min_length=2)):
             return {"query": query, "papers": papers, "count": len(papers)}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"arXiv search failed: {str(exc)}")
+
+
+class ArxivImportRequest(BaseModel):
+    title: str
+    summary: str
+    authors: Optional[List[str]] = []
+    published: Optional[str] = ""
+    arxiv_id: Optional[str] = ""
+
+@app.post("/import-arxiv-paper")
+def import_arxiv_paper(req: ArxivImportRequest):
+    """
+    Imports an arXiv paper found via search:
+    Generates a structured research PDF containing title, authors,
+    publication date, arXiv citation reference, and full abstract,
+    then executes the preprocessing pipeline (text extraction, cleaning, chunking).
+    """
+    import pymupdf
+
+    safe_title_slug = re.sub(r"[^a-zA-Z0-9_\-]+", "_", req.title.strip())[:30].strip("_")
+    unique_prefix = uuid.uuid4().hex[:8]
+    safe_stored_name = f"arxiv_{unique_prefix}_{safe_title_slug}.pdf"
+    file_path = UPLOAD_DIR / safe_stored_name
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=595, height=842)
+
+    page.insert_text((50, 45), f"arXiv Pre-print: {req.arxiv_id or 'arXiv.org'}", fontsize=9, color=(0.4, 0.4, 0.5))
+
+    rect_title = pymupdf.Rect(50, 65, 545, 140)
+    page.insert_textbox(rect_title, req.title, fontsize=15, fontname="helv", color=(0.1, 0.1, 0.15))
+
+    authors_str = ", ".join(req.authors) if req.authors else "Anonymous"
+    pub_str = f"Authors: {authors_str}  |  Published: {req.published or 'Recent'}"
+    page.insert_text((50, 150), pub_str, fontsize=9.5, color=(0.3, 0.3, 0.4))
+
+    page.insert_text((50, 185), "Abstract & Key Methodology:", fontsize=12, fontname="helv", color=(0.15, 0.15, 0.2))
+
+    rect_abstract = pymupdf.Rect(50, 205, 545, 780)
+    page.insert_textbox(rect_abstract, req.summary, fontsize=10.5, fontname="helv", color=(0.2, 0.2, 0.25))
+
+    doc.save(str(file_path))
+    doc.close()
+
+    preprocessing = pdf_service.process_pdf(file_path)
+
+    return {
+        "message": f"arXiv paper '{req.title}' successfully imported and preprocessed.",
+        "filename": f"{req.title[:45]} (arXiv).pdf",
+        "saved_filename": safe_stored_name,
+        "file_size_bytes": file_path.stat().st_size,
+        "file_size_kb": round(file_path.stat().st_size / 1024, 2),
+        "status": "success",
+        "preprocessing": preprocessing,
+    }
 
 
 @app.post("/papers/{saved_filename}/summarize")

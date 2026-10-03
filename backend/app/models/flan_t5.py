@@ -95,7 +95,7 @@ class FlanT5Summarizer:
         start_time = time.time()
 
         # Prompt formatting for FLAN-T5 instruction following
-        prompt = f"Summarize the key findings and methodology of this research text:\n\n{text}"
+        prompt = f"Provide a detailed academic summary covering the methodology, key concepts, and findings of this research paper:\n\n{text}"
 
         inputs = self.tokenizer(
             prompt,
@@ -109,9 +109,9 @@ class FlanT5Summarizer:
                 inputs["input_ids"],
                 attention_mask=inputs.get("attention_mask"),
                 max_length=max_length,
-                min_length=min_length,
+                min_length=max(min_length, 45),
                 num_beams=num_beams,
-                length_penalty=length_penalty,
+                length_penalty=1.6,
                 early_stopping=True,
                 no_repeat_ngram_size=3,
             )

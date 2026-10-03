@@ -1106,21 +1106,43 @@ a {
   line-height: 1.5;
 }
 
+.arxiv-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
 .arxiv-load-btn {
-  align-self: flex-start;
-  margin-top: 6px;
-  background: rgba(124, 92, 255, 0.15);
-  border: 1px solid rgba(124, 92, 255, 0.35);
+  background: rgba(124, 92, 255, 0.18);
+  border: 1px solid rgba(124, 92, 255, 0.4);
   color: #c4b5fd;
   border-radius: 8px;
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 600;
   transition: 0.2s;
+  cursor: pointer;
 }
 
-.arxiv-load-btn:hover {
-  background: rgba(124, 92, 255, 0.3);
+.arxiv-load-btn:hover:not(:disabled) {
+  background: rgba(124, 92, 255, 0.35);
+  color: white;
+}
+
+.arxiv-summary-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #7dd3fc;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.arxiv-summary-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.3);
   color: white;
 }
 
@@ -1396,83 +1418,4 @@ a {
   background: rgba(124, 92, 255, 0.2);
   color: #ffffff;
   border-color: rgba(124, 92, 255, 0.4);
-}
-
-/* ================= VIVA LOGIC BREAKDOWN CARD ================= */
-.viva-logic-card {
-  margin-top: 18px;
-  background: rgba(18, 22, 36, 0.95);
-  border: 1px solid rgba(124, 92, 255, 0.35);
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-.viva-logic-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.viva-logic-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.viva-logic-title h4 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #c4b5fd;
-}
-
-.viva-toggle-icon {
-  font-size: 12px;
-  color: #a78bfa;
-}
-
-.viva-logic-grid {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 12px;
-  animation: fadeIn 0.25s ease;
-}
-
-.viva-logic-item {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-
-.viva-logic-item h5 {
-  font-size: 12px;
-  font-weight: 700;
-  color: #38bdf8;
-  margin: 0 0 6px 0;
-}
-
-.viva-logic-item p {
-  font-size: 12px;
-  color: #94a3b8;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.viva-logic-item strong {
-  color: #f1f5f9;
-}
-
-.viva-logic-item em {
-  color: #a78bfa;
-}
-
-@media (max-width: 640px) {
-  .viva-logic-grid {
-    grid-template-columns: 1fr;
-  }
 }

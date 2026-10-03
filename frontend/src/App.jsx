@@ -20,7 +20,6 @@ function App() {
 
   // Single Model state
   const [singleModel, setSingleModel] = useState("flan-t5");
-  const [singleMaxLength, setSingleMaxLength] = useState(160);
   const [singleSummarizing, setSingleSummarizing] = useState(false);
   const [singleSummaryResult, setSingleSummaryResult] = useState(null);
   const [singleSummaryError, setSingleSummaryError] = useState("");
@@ -30,10 +29,8 @@ function App() {
   const [modelComparisonResult, setModelComparisonResult] = useState(null);
   const [summaryError, setSummaryError] = useState("");
 
-  // Logic guide modal & chatbot modal & toast
-  const [showLogicGuide, setShowLogicGuide] = useState(false);
+  // Chatbot modal & toast
   const [showChatbotModal, setShowChatbotModal] = useState(false);
-  const [showLogicCardDetails, setShowLogicCardDetails] = useState(true);
   const [toastMessage, setToastMessage] = useState("");
 
   const showToast = (msg) => {
@@ -98,13 +95,61 @@ function App() {
     }
   };
 
-  // 2. Load Sample Demo Paper (1-Click Evaluation)
+  // 2. Select & Import arXiv Paper (Directly Analyzes That Specific Paper)
+  const handleSelectArxivPaper = async (paper, mode = "compare") => {
+    setUploadLoading(true);
+    setUploadError("");
+    setArxivError("");
+    showToast(`Importing paper: "${paper.title.slice(0, 32)}..."`);
+
+    try {
+      const response = await fetch("http://localhost:8000/import-arxiv-paper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: paper.title,
+          summary: paper.summary,
+          authors: paper.authors,
+          published: paper.published,
+          arxiv_id: paper.arxiv_id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to import arXiv paper.");
+      }
+
+      const importedPaper = await response.json();
+      setUploadedPaper(importedPaper);
+      setModelComparisonResult(null);
+      setSingleSummaryResult(null);
+      setActiveToolMode(mode);
+
+      setTimeout(() => {
+        workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 120);
+
+      // Immediately execute the selected mode on this imported paper!
+      if (mode === "compare") {
+        await runComparisonOnFilename(importedPaper.saved_filename);
+      } else {
+        await runSingleSummaryOnFilename(importedPaper.saved_filename, singleModel);
+      }
+    } catch (err) {
+      setUploadError(err.message || "Failed to process arXiv paper.");
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  // 3. Load Sample Demo Paper
   const handleLoadDemoPaper = async () => {
     try {
       const data = await ensurePaperLoaded();
       setModelComparisonResult(null);
       setSingleSummaryResult(null);
-      showToast("Demo research paper loaded!");
+      showToast("Demo paper loaded (scientific_embeddings.pdf)");
       setTimeout(() => {
         workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 150);
@@ -150,40 +195,25 @@ function App() {
 
       const result = await response.json();
       setUploadedPaper(result);
-      showToast("PDF uploaded and preprocessed!");
+      showToast(`Uploaded: ${result.filename}`);
       setTimeout(() => {
         workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 150);
     } catch (err) {
-      setUploadError(err.message || "Failed to connect to backend server. Make sure the backend is running.");
+      setUploadError(err.message || "Failed to connect to backend server.");
     } finally {
       setUploadLoading(false);
       event.target.value = "";
     }
   };
 
-  // 3. Quick Compare Models (FLAN-T5 vs BART) - 1-Click
-  const handleRunModelComparison = async () => {
-    setActiveToolMode("compare");
-    setSummaryError("");
-
-    let paper = uploadedPaper;
-    if (!paper) {
-      try {
-        paper = await ensurePaperLoaded();
-      } catch {
-        return;
-      }
-    }
-
-    setTimeout(() => {
-      workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-
+  // Internal executor for comparison
+  const runComparisonOnFilename = async (filename) => {
     setModelSummarizing(true);
+    setSummaryError("");
     try {
       const response = await fetch(
-        `http://localhost:8000/papers/${paper.saved_filename}/compare?max_length=160&min_length=40`,
+        `http://localhost:8000/papers/${filename}/compare?max_length=160&min_length=40`,
         { method: "POST" }
       );
 
@@ -194,23 +224,47 @@ function App() {
 
       const data = await response.json();
       setModelComparisonResult(data);
-      showToast("Comparison complete! Meta BART vs FLAN-T5 evaluated.");
+      showToast("Comparison complete! FLAN-T5 vs BART evaluated.");
     } catch (err) {
-      setSummaryError(err.message || "Failed to run transformer inference. Ensure backend is running.");
+      setSummaryError(err.message || "Failed to run transformer inference.");
     } finally {
       setModelSummarizing(false);
     }
   };
 
-  // 4. Quick Single Model Summarizer - 1-Click
-  const handleRunSingleSummarize = async (overrideModel = null) => {
-    const targetModel = overrideModel || singleModel;
-    setActiveToolMode("single");
-    if (overrideModel) setSingleModel(overrideModel);
+  // Internal executor for single summary
+  const runSingleSummaryOnFilename = async (filename, modelType) => {
+    setSingleSummarizing(true);
     setSingleSummaryError("");
+    try {
+      const response = await fetch(
+        `http://localhost:8000/papers/${filename}/summarize?model_type=${modelType}&max_length=160&min_length=40`,
+        { method: "POST" }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Summarization failed.");
+      }
+
+      const data = await response.json();
+      setSingleSummaryResult(data);
+      showToast(`${modelType === "flan-t5" ? "FLAN-T5" : "BART"} summary generated!`);
+    } catch (err) {
+      setSingleSummaryError(err.message || "Failed to generate summary.");
+    } finally {
+      setSingleSummarizing(false);
+    }
+  };
+
+  // 4. Compare Models Trigger from Button
+  const handleRunModelComparison = async () => {
+    setActiveToolMode("compare");
+    setSummaryError("");
 
     let paper = uploadedPaper;
     if (!paper) {
+      showToast("Loading demo research paper for instant comparison...");
       try {
         paper = await ensurePaperLoaded();
       } catch {
@@ -222,26 +276,31 @@ function App() {
       workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
 
-    setSingleSummarizing(true);
-    try {
-      const response = await fetch(
-        `http://localhost:8000/papers/${paper.saved_filename}/summarize?model_type=${targetModel}&max_length=${singleMaxLength}&min_length=40`,
-        { method: "POST" }
-      );
+    await runComparisonOnFilename(paper.saved_filename);
+  };
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || "Summarization failed.");
+  // 5. Single Model Summarizer Trigger from Button
+  const handleRunSingleSummarize = async (overrideModel = null) => {
+    const targetModel = overrideModel || singleModel;
+    setActiveToolMode("single");
+    if (overrideModel) setSingleModel(overrideModel);
+    setSingleSummaryError("");
+
+    let paper = uploadedPaper;
+    if (!paper) {
+      showToast("Loading demo research paper for instant summary...");
+      try {
+        paper = await ensurePaperLoaded();
+      } catch {
+        return;
       }
-
-      const data = await response.json();
-      setSingleSummaryResult(data);
-      showToast(`${targetModel.toUpperCase()} summary generated!`);
-    } catch (err) {
-      setSingleSummaryError(err.message || "Failed to generate summary.");
-    } finally {
-      setSingleSummarizing(false);
     }
+
+    setTimeout(() => {
+      workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+
+    await runSingleSummaryOnFilename(paper.saved_filename, targetModel);
   };
 
   return (
@@ -284,18 +343,11 @@ function App() {
               searchInputRef.current?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            🔍 arXiv
+            🔍 arXiv Search
           </a>
-          <button
-            className="nav-guide-btn"
-            onClick={() => setShowLogicGuide(true)}
-            title="Open logic & viva presentation guide"
-          >
-            📖 Logic & Viva Guide
-          </button>
         </div>
 
-        <button className="status-button" onClick={() => setShowLogicGuide(true)}>
+        <button className="status-button">
           <span className="status-dot"></span>
           System Online (RTX 2050 CUDA)
         </button>
@@ -315,9 +367,8 @@ function App() {
           </h1>
 
           <p className="hero-description">
-            Search research papers directly from arXiv, upload academic PDFs, generate
-            intelligent summaries, compare transformer models side-by-side, and inspect
-            ROUGE evaluation metrics.
+            Search peer-reviewed papers on arXiv, upload academic PDFs, generate
+            intelligent summaries, and benchmark pretrained transformer models side-by-side.
           </p>
 
           {/* Search Box */}
@@ -374,12 +425,26 @@ function App() {
                     <h4>{paper.title}</h4>
                     <p className="arxiv-authors">By {paper.authors.join(", ")}</p>
                     <p className="arxiv-abstract">{paper.summary.slice(0, 180)}...</p>
-                    <button
-                      className="arxiv-load-btn"
-                      onClick={() => handleRunModelComparison()}
-                    >
-                      ⚡ Analyze & Compare in ResearchS
-                    </button>
+                    
+                    {/* Direct Actions on the exact arXiv paper */}
+                    <div className="arxiv-card-actions">
+                      <button
+                        className="arxiv-load-btn"
+                        onClick={() => handleSelectArxivPaper(paper, "compare")}
+                        disabled={uploadLoading || modelSummarizing}
+                        title="Analyze and compare FLAN-T5 vs BART on this specific arXiv paper"
+                      >
+                        ⚡ Compare Models
+                      </button>
+                      <button
+                        className="arxiv-summary-btn"
+                        onClick={() => handleSelectArxivPaper(paper, "single")}
+                        disabled={uploadLoading || singleSummarizing}
+                        title="Generate summary of this specific arXiv paper"
+                      >
+                        📝 Summarize
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -392,7 +457,7 @@ function App() {
               className="primary-button cta-glow"
               onClick={handleRunModelComparison}
               disabled={modelSummarizing || uploadLoading}
-              title="Loads paper and executes FLAN-T5 vs BART comparison side-by-side"
+              title="Executes FLAN-T5 vs BART comparison side-by-side"
             >
               <span>⚡</span>
               {modelSummarizing ? "Running Transformers..." : "Compare Models (FLAN-T5 vs BART)"}
@@ -400,9 +465,9 @@ function App() {
 
             <button
               className="secondary-button"
-              onClick={() => handleRunSingleSummarize("flan-t5")}
+              onClick={() => handleRunSingleSummarize("bart")}
               disabled={singleSummarizing || uploadLoading}
-              title="Loads paper and generates abstractive summary using FLAN-T5 or BART"
+              title="Generates abstractive summary using FLAN-T5 or BART"
             >
               <span>📝</span>
               {singleSummarizing ? "Summarizing..." : "Smart Summary"}
@@ -615,7 +680,7 @@ function App() {
                             <div className="pkl-tag">
                               <span>💾 Saved Checkpoint Artifact:</span>
                               <code>{modelComparisonResult.comparison.best_model_pkl_saved}</code>
-                              <span className="success-tag">✓ Fulfills Criterion 14</span>
+                              <span className="success-tag">✓ Serialized best_model.pkl</span>
                             </div>
                           </div>
 
@@ -709,52 +774,6 @@ function App() {
                             <span>Cross-Model Agreement ROUGE-1 F1: <strong>{modelComparisonResult.comparison.cross_model_agreement_rouge1_f1 || "0.4762"}</strong></span>
                             <span>Source Words Analyzed: <strong>{modelComparisonResult.source_word_count}</strong></span>
                           </div>
-
-                          {/* Built-in Viva Logic Explanation Card */}
-                          <div className="viva-logic-card">
-                            <div
-                              className="viva-logic-header"
-                              onClick={() => setShowLogicCardDetails(!showLogicCardDetails)}
-                              style={{ cursor: "pointer" }}
-                            >
-                              <div className="viva-logic-title">
-                                <span>💡</span>
-                                <h4>Why Meta BART Won & How ROUGE Works (Viva Explanation)</h4>
-                              </div>
-                              <span className="viva-toggle-icon">{showLogicCardDetails ? "▲" : "▼"}</span>
-                            </div>
-
-                            {showLogicCardDetails && (
-                              <div className="viva-logic-grid">
-                                <div className="viva-logic-item">
-                                  <h5>1. Architectural Difference</h5>
-                                  <p>
-                                    <strong>Meta BART</strong> is an encoder-decoder <em>denoising autoencoder</em> specifically fine-tuned on news/article summarization datasets (CNN/DailyMail). It naturally outputs cohesive, paragraph-length abstracts.
-                                  </p>
-                                </div>
-                                <div className="viva-logic-item">
-                                  <h5>2. Why BART Scored Higher</h5>
-                                  <p>
-                                    BART achieved <strong>0.5714 ROUGE-1 F1</strong> vs FLAN-T5's <strong>0.3740</strong> because BART synthesized complete sentences preserving technical key terms, whereas FLAN-T5 generated a concise, single-sentence factual excerpt.
-                                  </p>
-                                </div>
-                                <div className="viva-logic-item">
-                                  <h5>3. ROUGE Evaluation Breakdown</h5>
-                                  <p>
-                                    <strong>ROUGE-1</strong> = Word recall (did it capture key vocabulary?).<br />
-                                    <strong>ROUGE-2</strong> = Phrasal fluency (adjacent 2-word terms).<br />
-                                    <strong>ROUGE-L</strong> = Sentence structural order (coherence).
-                                  </p>
-                                </div>
-                                <div className="viva-logic-item">
-                                  <h5>4. Official Hugging Face Confirmation</h5>
-                                  <p>
-                                    Both models (<code>google/flan-t5-base</code> and <code>facebook/bart-large-cnn</code>) are genuine Hugging Face transformers running locally via PyTorch with CUDA GPU acceleration.
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
                         </div>
                       )}
                     </div>
@@ -773,19 +792,6 @@ function App() {
                           >
                             <option value="flan-t5">Google FLAN-T5 (google/flan-t5-base)</option>
                             <option value="bart">Meta BART (facebook/bart-large-cnn)</option>
-                          </select>
-                        </div>
-
-                        <div className="control-group">
-                          <label>Target Summary Length:</label>
-                          <select
-                            value={singleMaxLength}
-                            onChange={(e) => setSingleMaxLength(Number(e.target.value))}
-                            className="model-select"
-                          >
-                            <option value={100}>Concise (~80-100 words)</option>
-                            <option value={160}>Standard (~120-160 words)</option>
-                            <option value={240}>Detailed (~200-240 words)</option>
                           </select>
                         </div>
 
@@ -899,7 +905,7 @@ function App() {
               <div className="feature-icon blue">▤</div>
               <h3>Smart Summaries</h3>
               <p>
-                Generate concise summaries using FLAN-T5 or BART with customizable length.
+                Generate high-quality abstractive summaries using Google FLAN-T5 or Meta BART.
               </p>
               <span className="card-click-hint">Click to generate summary →</span>
             </div>
@@ -967,40 +973,6 @@ function App() {
           </div>
         </section>
       </main>
-
-      {/* Logic & Viva Guide Modal */}
-      {showLogicGuide && (
-        <div className="modal-overlay" onClick={() => setShowLogicGuide(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>📖 ResearchS: Pipeline Logic & Viva Cheatsheet</h3>
-              <button onClick={() => setShowLogicGuide(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <h4>1. How the Comparison Works</h4>
-              <p>
-                When you click <strong>Compare Models</strong>, both Google FLAN-T5 and Meta BART receive the exact same cleaned research paper text chunks.
-                We measure inference speed (latency in seconds on your NVIDIA RTX 2050 GPU) and compute <strong>ROUGE-1</strong> (vocabulary overlap), <strong>ROUGE-2</strong> (two-word fluency), and <strong>ROUGE-L</strong> (structural order).
-              </p>
-
-              <h4>2. Why Did Meta BART Win?</h4>
-              <p>
-                Meta BART is an encoder-decoder <strong>denoising autoencoder</strong> (406M parameters) fine-tuned on the CNN/DailyMail dataset for abstractive narrative summarization. It produces rich, flowing sentences that capture key ideas, achieving a higher ROUGE-1 F1 score (<strong>0.5714 vs 0.3740</strong>). FLAN-T5 (250M parameters) is an instruction-tuned Seq2Seq model that focuses on short, concise factual answers.
-              </p>
-
-              <h4>3. Are We Using Hugging Face?</h4>
-              <p>
-                <strong>Yes, 100%!</strong> Both <code>google/flan-t5-base</code> and <code>facebook/bart-large-cnn</code> are official Hugging Face Hub models loaded using the Hugging Face <code>transformers</code> library (<code>AutoTokenizer</code> and <code>AutoModelForSeq2SeqLM</code>) and accelerated by PyTorch CUDA on your laptop GPU.
-              </p>
-
-              <h4>4. Saved Artifact (Professor Criterion 14)</h4>
-              <p>
-                The winning model architecture, parameters, and evaluation scores are serialized into <code>backend/best_model.pkl</code> using Python's standard <code>pickle</code> module. You can show this file directly to your professor to satisfy Criterion 14.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Research Chatbot Modal (Step 26 Preview) */}
       {showChatbotModal && (
