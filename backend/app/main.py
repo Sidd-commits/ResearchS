@@ -1,13 +1,19 @@
+import logging
 import os
 import shutil
 import uuid
 from pathlib import Path
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from typing import Optional
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.services.pdf_service import pdf_service, PDFPreprocessingError
+
+logger = logging.getLogger("researchs.api")
 
 app = FastAPI(
     title="ResearchS API",
-    description="AI-powered research paper summarization and question answering system",
+    description="AI-powered research paper summarization, comparison, and question answering system",
     version="1.0.0"
 )
 
@@ -39,15 +45,22 @@ def health_check():
     }
 
 @app.post("/upload-pdf")
-async def upload_pdf(file: UploadFile = File(...)):
-    # Validate file presence and extension
+async def upload_pdf(
+    file: UploadFile = File(...),
+    chunk_size: Optional[int] = Query(default=1200, ge=200, le=4000),
+    chunk_overlap: Optional[int] = Query(default=200, ge=0, le=500),
+):
+    """
+    Step 16 & 17 & 18:
+    Uploads a research PDF, validates it, stores it, extracts raw text,
+    cleans academic noise, and performs sentence-aware chunking.
+    """
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=400,
             detail="Invalid file format. Only PDF files (.pdf) are allowed."
         )
 
-    # Sanitize filename and create unique storage path to avoid collisions
     original_filename = os.path.basename(file.filename)
     safe_stored_name = f"{uuid.uuid4().hex[:8]}_{original_filename}"
     file_path = UPLOAD_DIR / safe_stored_name
@@ -65,11 +78,63 @@ async def upload_pdf(file: UploadFile = File(...)):
     finally:
         await file.close()
 
+    # Preprocess text (Step 17 extraction + Step 18 cleaning & chunking)
+    try:
+        preprocessing = pdf_service.process_pdf(
+            file_path,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
+    except PDFPreprocessingError as err:
+        logger.warning(f"Preprocessing error on {safe_stored_name}: {err}")
+        preprocessing = {
+            "status": "error",
+            "message": str(err),
+            "page_count": 0,
+            "chunks": [],
+        }
+
     return {
-        "message": "PDF uploaded and validated successfully.",
+        "message": "PDF uploaded and preprocessed successfully.",
         "filename": original_filename,
         "saved_filename": safe_stored_name,
         "file_size_bytes": file_size,
         "file_size_kb": round(file_size / 1024, 2),
-        "status": "success"
-    }
+        "status": "success",
+        "preprocessing": preprocessing,
+    }
+
+@app.get("/papers/{saved_filename}/preprocess")
+def get_paper_preprocessing(
+    saved_filename: str,
+    chunk_size: Optional[int] = Query(default=1200, ge=200, le=4000),
+    chunk_overlap: Optional[int] = Query(default=200, ge=0, le=500),
+):
+    """
+    Re-runs or inspects text extraction, cleaning, and chunking with custom parameters.
+    """
+    file_path = UPLOAD_DIR / os.path.basename(saved_filename)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Requested PDF file not found.")
+
+    try:
+        result = pdf_service.process_pdf(
+            file_path,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Preprocessing failed: {str(exc)}")
+
+@app.get("/uploads")
+def list_uploaded_papers():
+    """Lists all currently saved research papers in the uploads folder."""
+    papers = []
+    for f in UPLOAD_DIR.glob("*.pdf"):
+        papers.append({
+            "saved_filename": f.name,
+            "file_size_kb": round(f.stat().st_size / 1024, 2),
+        })
+    return {"papers": papers, "count": len(papers)}
+

@@ -7,6 +7,7 @@ function App() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadedPaper, setUploadedPaper] = useState(null);
   const [uploadError, setUploadError] = useState("");
+  const [showPreprocessedDetails, setShowPreprocessedDetails] = useState(false);
 
   const handleSearch = () => {
     if (!searchQuery.trim()) {
@@ -162,22 +163,103 @@ function App() {
           )}
 
           {uploadedPaper && (
-            <div className="uploaded-card">
-              <div className="uploaded-card-icon">📄</div>
-              <div className="uploaded-card-info">
-                <h4>{uploadedPaper.filename}</h4>
-                <p>
-                  Size: <strong>{uploadedPaper.file_size_kb} KB</strong> • Status:{" "}
-                  <span className="success-tag">✓ Ready for Preprocessing</span>
-                </p>
+            <div className="uploaded-container">
+              <div className="uploaded-card">
+                <div className="uploaded-card-icon">📄</div>
+                <div className="uploaded-card-info">
+                  <h4>{uploadedPaper.filename}</h4>
+                  <p>
+                    Size: <strong>{uploadedPaper.file_size_kb} KB</strong>
+                    {uploadedPaper.preprocessing?.page_count ? (
+                      <> • Pages: <strong>{uploadedPaper.preprocessing.page_count}</strong></>
+                    ) : null}
+                    {" "}• Status:{" "}
+                    <span className="success-tag">✓ Extracted & Preprocessed</span>
+                  </p>
+                </div>
+                <button
+                  className="clear-paper-button"
+                  onClick={() => {
+                    setUploadedPaper(null);
+                    setShowPreprocessedDetails(false);
+                  }}
+                  title="Remove paper"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                className="clear-paper-button"
-                onClick={() => setUploadedPaper(null)}
-                title="Remove paper"
-              >
-                ✕
-              </button>
+
+              {/* Preprocessing Metrics & Inspection */}
+              {uploadedPaper.preprocessing && (
+                <div className="preprocessing-details">
+                  <div className="metrics-grid">
+                    <div className="metric-box">
+                      <span className="metric-label">Engine</span>
+                      <span className="metric-value">{uploadedPaper.preprocessing.extractor}</span>
+                    </div>
+                    <div className="metric-box">
+                      <span className="metric-label">Cleaned Words</span>
+                      <span className="metric-value">
+                        {uploadedPaper.preprocessing.cleaned_metrics?.word_count?.toLocaleString() || "—"}
+                      </span>
+                    </div>
+                    <div className="metric-box">
+                      <span className="metric-label">Noise Cleaned</span>
+                      <span className="metric-value highlight-green">
+                        {uploadedPaper.preprocessing.cleaned_metrics?.noise_reduction_pct || 0}%
+                      </span>
+                    </div>
+                    <div className="metric-box">
+                      <span className="metric-label">Chunks Created</span>
+                      <span className="metric-value highlight-purple">
+                        {uploadedPaper.preprocessing.chunking?.total_chunks || 0}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="preprocessing-actions">
+                    <button
+                      className="preview-toggle-btn"
+                      onClick={() => setShowPreprocessedDetails(!showPreprocessedDetails)}
+                    >
+                      {showPreprocessedDetails ? "Hide Preprocessed Chunks ▲" : "Inspect Cleaned Text & Chunks ▼"}
+                    </button>
+                  </div>
+
+                  {showPreprocessedDetails && (
+                    <div className="preprocessed-inspector">
+                      <div className="inspector-section">
+                        <h5>Cleaned Research Text Preview</h5>
+                        <pre className="text-preview-box">
+                          {uploadedPaper.preprocessing.preview_text}
+                        </pre>
+                      </div>
+
+                      {uploadedPaper.preprocessing.chunks?.length > 0 && (
+                        <div className="inspector-section">
+                          <h5>Sentence-Aware Chunks for Transformers ({uploadedPaper.preprocessing.chunks.length})</h5>
+                          <div className="chunks-list">
+                            {uploadedPaper.preprocessing.chunks.slice(0, 4).map((chunk) => (
+                              <div key={chunk.chunk_index} className="chunk-item">
+                                <div className="chunk-header">
+                                  <span>Chunk #{chunk.chunk_index + 1}</span>
+                                  <span>{chunk.word_count} words • ~{chunk.estimated_tokens} tokens</span>
+                                </div>
+                                <p className="chunk-body">{chunk.text}</p>
+                              </div>
+                            ))}
+                            {uploadedPaper.preprocessing.chunks.length > 4 && (
+                              <p className="more-chunks-note">
+                                + {uploadedPaper.preprocessing.chunks.length - 4} more chunks ready for FLAN-T5 & BART
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
