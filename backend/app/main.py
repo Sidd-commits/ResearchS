@@ -137,4 +137,76 @@ def list_uploaded_papers():
             "file_size_kb": round(f.stat().st_size / 1024, 2),
         })
     return {"papers": papers, "count": len(papers)}
+
+@app.post("/papers/{saved_filename}/summarize")
+def summarize_paper(
+    saved_filename: str,
+    model_type: str = Query(default="flan-t5", description="Model: 'flan-t5' or 'bart'"),
+    max_length: int = Query(default=160, ge=40, le=512),
+    min_length: int = Query(default=40, ge=10, le=200),
+):
+    """
+    Step 19 (FLAN-T5) & Step 20 (BART):
+    Generates an abstractive summary of an uploaded research paper
+    using the specified pretrained transformer model.
+    """
+    from app.services.summarization_service import summarization_service
+
+    try:
+        result = summarization_service.summarize_single_model(
+            saved_filename=saved_filename,
+            model_type=model_type,
+            max_length=max_length,
+            min_length=min_length,
+        )
+        return result
+    except FileNotFoundError as err:
+        raise HTTPException(status_code=404, detail=str(err))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Summarization failed: {str(exc)}")
+
+@app.post("/papers/{saved_filename}/compare")
+def compare_models(
+    saved_filename: str,
+    max_length: int = Query(default=160, ge=40, le=512),
+    min_length: int = Query(default=40, ge=10, le=200),
+):
+    """
+    Runs both Google FLAN-T5 and Meta BART on the exact same research paper,
+    compares latency and ROUGE metrics, selects the best model, and saves 'best_model.pkl'.
+    """
+    from app.services.summarization_service import summarization_service
+
+    try:
+        result = summarization_service.compare_models(
+            saved_filename=saved_filename,
+            max_length=max_length,
+            min_length=min_length,
+        )
+        return result
+    except FileNotFoundError as err:
+        raise HTTPException(status_code=404, detail=str(err))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Model comparison failed: {str(exc)}")
+
+@app.get("/best-model")
+def get_best_model_artifact():
+    """
+    Returns metadata about the serialized 'best_model.pkl' artifact (Professor Criterion 14).
+    """
+    import pickle
+    pkl_path = BASE_DIR / "best_model.pkl"
+    if not pkl_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="best_model.pkl has not been generated yet. Run model comparison first.",
+        )
+
+    try:
+        with open(pkl_path, "rb") as f:
+            data = pickle.load(f)
+        return {"status": "success", "artifact_path": str(pkl_path), "metadata": data}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to read best_model.pkl: {str(exc)}")
+
 

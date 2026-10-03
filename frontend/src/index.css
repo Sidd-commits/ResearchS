@@ -771,3 +771,219 @@ a {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ================= MODEL COMPARISON DASHBOARD ================= */
+
+.model-comparison-trigger {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.compare-models-cta {
+  border: none;
+  background: linear-gradient(135deg, #7c5cff, #4338ca);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(124, 92, 255, 0.35);
+  transition: all 0.25s ease;
+}
+
+.compare-models-cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(124, 92, 255, 0.5);
+  background: linear-gradient(135deg, #8b6dff, #4f46e5);
+}
+
+.compare-models-cta:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.models-running-banner {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  color: #c4b5fd;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  animation: fadeIn 0.3s ease;
+}
+
+.comparison-results-panel {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: fadeIn 0.4s ease;
+  text-align: left;
+}
+
+.winner-banner {
+  background: linear-gradient(135deg, rgba(78, 214, 132, 0.12), rgba(124, 92, 255, 0.1));
+  border: 1px solid rgba(78, 214, 132, 0.35);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.winner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: #7ce4a6;
+}
+
+.winner-title h4 {
+  margin: 0;
+  font-weight: 700;
+}
+
+.winner-reason {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pkl-tag {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.pkl-tag code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #a78bfa;
+  font-family: monospace;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.model-result-card {
+  background: rgba(18, 20, 32, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: 0.2s ease;
+}
+
+.flan-card {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.bart-card {
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.model-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.model-card-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.model-arch-badge {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.speed-badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.model-summary-box {
+  background: rgba(10, 12, 20, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 120px;
+}
+
+.model-summary-box p {
+  font-size: 13px;
+  color: #e2e8f0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.eval-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.metric-chip {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 6px 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chip-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.3px;
+}
+
+.chip-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.comparison-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 10px 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 768px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
