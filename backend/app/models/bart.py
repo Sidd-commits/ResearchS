@@ -49,6 +49,26 @@ class BartSummarizer:
         self._is_loaded = True
         logger.info(f"BART loaded successfully onto device: {self.device}")
 
+    def unload_model(self) -> None:
+        """Frees model and tokenizer from GPU and RAM."""
+        if not self._is_loaded and self.model is None:
+            return
+
+        import gc
+        logger.info(f"Unloading BART model to free memory...")
+        del self.model
+        del self.tokenizer
+        self.model = None
+        self.tokenizer = None
+        self._is_loaded = False
+        gc.collect()
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:
+            pass
+
     def summarize(
         self,
         text: str,

@@ -987,3 +987,492 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+/* ================= NAV GUIDE BUTTON ================= */
+
+.nav-guide-btn {
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  color: #c4b5fd;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.nav-guide-btn:hover {
+  background: rgba(124, 92, 255, 0.25);
+  color: white;
+}
+
+/* ================= DEMO PAPER BUTTON ================= */
+
+.demo-paper-button {
+  background: rgba(78, 214, 132, 0.1);
+  border: 1px solid rgba(78, 214, 132, 0.3);
+  color: #7ce4a6;
+  border-radius: 11px;
+  padding: 13px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.2s ease;
+}
+
+.demo-paper-button:hover:not(:disabled) {
+  background: rgba(78, 214, 132, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(78, 214, 132, 0.2);
+}
+
+.demo-paper-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= ARXIV SEARCH RESULTS ================= */
+
+.arxiv-results-panel {
+  width: min(850px, 100%);
+  margin-top: 24px;
+  background: rgba(15, 17, 28, 0.95);
+  border: 1px solid rgba(124, 92, 255, 0.25);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: left;
+  animation: fadeIn 0.3s ease;
+}
+
+.arxiv-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.arxiv-results-header h3 {
+  font-size: 16px;
+  color: #f1f5f9;
+}
+
+.arxiv-results-header button {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.arxiv-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.arxiv-card {
+  background: rgba(22, 24, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arxiv-date {
+  font-size: 11px;
+  color: #a78bfa;
+}
+
+.arxiv-card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.4;
+}
+
+.arxiv-authors {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.arxiv-abstract {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.arxiv-load-btn {
+  align-self: flex-start;
+  margin-top: 6px;
+  background: rgba(124, 92, 255, 0.15);
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  color: #c4b5fd;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.arxiv-load-btn:hover {
+  background: rgba(124, 92, 255, 0.3);
+  color: white;
+}
+
+/* ================= TOOL TABS ================= */
+
+.tool-tabs-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+  justify-content: center;
+}
+
+.tool-tab-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.tool-tab-btn.active {
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.3), rgba(79, 70, 229, 0.3));
+  border-color: #7c5cff;
+  color: #ffffff;
+}
+
+.tool-tab-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+/* ================= SINGLE MODEL CONTROLS ================= */
+
+.single-model-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.single-model-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.control-group label {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.model-select {
+  background: rgba(10, 12, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.single-summary-card {
+  background: rgba(18, 20, 32, 0.95);
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: left;
+  animation: fadeIn 0.3s ease;
+}
+
+.single-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.single-summary-header h4 {
+  font-size: 16px;
+  color: #f8fafc;
+}
+
+.single-summary-text {
+  font-size: 14px;
+  color: #e2e8f0;
+  line-height: 1.7;
+  background: rgba(10, 12, 20, 0.85);
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ================= CLICKABLE FEATURE CARDS ================= */
+
+.feature-card.clickable {
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card.clickable:hover {
+  transform: translateY(-4px);
+  border-color: rgba(124, 92, 255, 0.4);
+  box-shadow: 0 12px 30px rgba(124, 92, 255, 0.15);
+}
+
+.card-click-hint {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+/* ================= LOGIC & VIVA MODAL ================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: #0f111c;
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  border-radius: 16px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  padding: 24px;
+  text-align: left;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  color: #f1f5f9;
+}
+
+.modal-header button {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.modal-body h4 {
+  font-size: 14px;
+  color: #a78bfa;
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+
+.modal-body p {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.modal-body code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #38bdf8;
+}
+
+/* ================= TOAST NOTIFICATION ================= */
+.toast-notification {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: rgba(20, 24, 38, 0.95);
+  border: 1px solid #4ed684;
+  color: #4ed684;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(78, 214, 132, 0.2);
+  z-index: 2000;
+  animation: slideUpToast 0.3s ease;
+}
+
+@keyframes slideUpToast {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ================= NAV TEXT BUTTONS ================= */
+.nav-text-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: 0.2s ease;
+}
+
+.nav-text-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ================= CTA GLOW ================= */
+.cta-glow {
+  box-shadow: 0 0 25px rgba(124, 92, 255, 0.5), 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(167, 139, 250, 0.5) !important;
+}
+
+/* ================= COPY SUMMARY BUTTON ================= */
+.copy-summary-btn {
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: 0.2s;
+}
+
+.copy-summary-btn:hover {
+  background: rgba(124, 92, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(124, 92, 255, 0.4);
+}
+
+/* ================= VIVA LOGIC BREAKDOWN CARD ================= */
+.viva-logic-card {
+  margin-top: 18px;
+  background: rgba(18, 22, 36, 0.95);
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.viva-logic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.viva-logic-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viva-logic-title h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+
+.viva-toggle-icon {
+  font-size: 12px;
+  color: #a78bfa;
+}
+
+.viva-logic-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 12px;
+  animation: fadeIn 0.25s ease;
+}
+
+.viva-logic-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.viva-logic-item h5 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin: 0 0 6px 0;
+}
+
+.viva-logic-item p {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.viva-logic-item strong {
+  color: #f1f5f9;
+}
+
+.viva-logic-item em {
+  color: #a78bfa;
+}
+
+@media (max-width: 640px) {
+  .viva-logic-grid {
+    grid-template-columns: 1fr;
+  }
+}

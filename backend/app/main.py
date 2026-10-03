@@ -138,6 +138,73 @@ def list_uploaded_papers():
         })
     return {"papers": papers, "count": len(papers)}
 
+@app.get("/sample-paper")
+def get_sample_demo_paper():
+    """
+    Returns a ready-to-test sample research paper for instant 1-click evaluation.
+    """
+    sample_file = UPLOAD_DIR / "1912ba7c_scientific_embeddings.pdf"
+    if not sample_file.exists():
+        pdfs = list(UPLOAD_DIR.glob("*.pdf"))
+        if not pdfs:
+            raise HTTPException(status_code=404, detail="No sample paper available.")
+        sample_file = pdfs[0]
+
+    preprocessing = pdf_service.process_pdf(sample_file)
+    return {
+        "message": "Demo research paper loaded successfully.",
+        "filename": "scientific_embeddings_nlp.pdf",
+        "saved_filename": sample_file.name,
+        "file_size_bytes": sample_file.stat().st_size,
+        "file_size_kb": round(sample_file.stat().st_size / 1024, 2),
+        "status": "success",
+        "preprocessing": preprocessing,
+    }
+
+@app.get("/search-arxiv")
+def search_arxiv(query: str = Query(..., min_length=2)):
+    """
+    Step 27 / Criteria 1 & 2:
+    Searches arXiv API for academic research papers.
+    """
+    import urllib.parse
+    import urllib.request
+    import xml.etree.ElementTree as ET
+
+    clean_query = urllib.parse.quote(query.strip())
+    url = f"https://export.arxiv.org/api/query?search_query=all:{clean_query}&start=0&max_results=4"
+    req = urllib.request.Request(url, headers={"User-Agent": "ResearchS/1.0"})
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            xml_data = resp.read()
+            root = ET.fromstring(xml_data)
+            ns = {"atom": "http://www.w3.org/2005/Atom"}
+            entries = root.findall("atom:entry", ns)
+            papers = []
+            for entry in entries:
+                title = entry.find("atom:title", ns)
+                summary = entry.find("atom:summary", ns)
+                published = entry.find("atom:published", ns)
+                id_elem = entry.find("atom:id", ns)
+                authors = [
+                    a.find("atom:name", ns).text
+                    for a in entry.findall("atom:author", ns)
+                    if a.find("atom:name", ns) is not None
+                ]
+
+                papers.append({
+                    "title": title.text.strip().replace("\n", " ") if title is not None else "Untitled",
+                    "summary": summary.text.strip().replace("\n", " ") if summary is not None else "",
+                    "authors": authors[:3],
+                    "published": published.text[:10] if published is not None else "",
+                    "arxiv_id": id_elem.text.strip() if id_elem is not None else "",
+                })
+            return {"query": query, "papers": papers, "count": len(papers)}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"arXiv search failed: {str(exc)}")
+
+
 @app.post("/papers/{saved_filename}/summarize")
 def summarize_paper(
     saved_filename: str,

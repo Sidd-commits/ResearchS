@@ -47,6 +47,14 @@ class SummarizationService:
             selected_chunks = chunks[:3]
             source_text = " ".join(c["text"] for c in selected_chunks)
 
+        words = len(source_text.split())
+        if words < 15:
+            raise ValueError(
+                f"Insufficient readable text found in document ({words} words extracted). "
+                "This file appears to be an image-based scanned PDF, presentation, or empty document. "
+                "Please upload a standard text-based research paper."
+            )
+
         return {
             "source_text": source_text,
             "preprocessed_meta": preprocessed,
@@ -65,30 +73,34 @@ class SummarizationService:
         source_text = data["source_text"]
 
         model_key = model_type.lower().strip()
-        if "flan" in model_key or "t5" in model_key:
-            result = flan_t5_summarizer.summarize(
-                source_text,
-                max_length=max_length,
-                min_length=min_length,
-            )
-        elif "bart" in model_key:
-            result = bart_summarizer.summarize(
-                source_text,
-                max_length=max_length,
-                min_length=min_length,
-            )
-        else:
-            raise ValueError(f"Unsupported model type: {model_type}. Choose 'flan-t5' or 'bart'.")
+        try:
+            if "flan" in model_key or "t5" in model_key:
+                result = flan_t5_summarizer.summarize(
+                    source_text,
+                    max_length=max_length,
+                    min_length=min_length,
+                )
+            elif "bart" in model_key:
+                result = bart_summarizer.summarize(
+                    source_text,
+                    max_length=max_length,
+                    min_length=min_length,
+                )
+            else:
+                raise ValueError(f"Unsupported model type: {model_type}. Choose 'flan-t5' or 'bart'.")
 
-        # Evaluate generated summary
-        eval_metrics = model_evaluator.evaluate_summary(
-            source_text=source_text,
-            summary=result["summary"],
-            latency_seconds=result["latency_seconds"],
-        )
-        result["evaluation"] = eval_metrics
-
-        return result
+            # Evaluate generated summary
+            eval_metrics = model_evaluator.evaluate_summary(
+                source_text=source_text,
+                summary=result["summary"],
+                latency_seconds=result["latency_seconds"],
+            )
+            result["evaluation"] = eval_metrics
+            return result
+        finally:
+            # Free memory immediately on completion
+            flan_t5_summarizer.unload_model()
+            bart_summarizer.unload_model()
 
     def compare_models(
         self,
@@ -100,6 +112,7 @@ class SummarizationService:
         Runs both Google FLAN-T5 and Meta BART on the exact same research paper text,
         benchmarks their speed, computes ROUGE scores, selects the best model,
         and exports 'best_model.pkl' (fulfilling Professor Criteria 4, 7, 8, & 14).
+        Uses sequential offloading so peak memory stays ultra-low.
         """
         data = self._prepare_paper_text(saved_filename)
         source_text = data["source_text"]
@@ -107,37 +120,49 @@ class SummarizationService:
 
         logger.info(f"Running comparative inference on: {saved_filename}...")
 
-        # 1. Run FLAN-T5
-        flan_result = flan_t5_summarizer.summarize(
-            source_text,
-            max_length=max_length,
-            min_length=min_length,
-        )
-        flan_eval = model_evaluator.evaluate_summary(
-            source_text=source_text,
-            summary=flan_result["summary"],
-            latency_seconds=flan_result["latency_seconds"],
-        )
-        flan_result["evaluation"] = flan_eval
+        try:
+            # 1. Run FLAN-T5
+            flan_result = flan_t5_summarizer.summarize(
+                source_text,
+                max_length=max_length,
+                min_length=min_length,
+            )
+            flan_eval = model_evaluator.evaluate_summary(
+                source_text=source_text,
+                summary=flan_result["summary"],
+                latency_seconds=flan_result["latency_seconds"],
+            )
+            flan_result["evaluation"] = flan_eval
 
-        # 2. Run Meta BART
-        bart_result = bart_summarizer.summarize(
-            source_text,
-            max_length=max_length,
-            min_length=min_length,
-        )
-        bart_eval = model_evaluator.evaluate_summary(
-            source_text=source_text,
-            summary=bart_result["summary"],
-            latency_seconds=bart_result["latency_seconds"],
-        )
-        bart_result["evaluation"] = bart_eval
+            # Free FLAN-T5 from RAM/GPU before loading BART
+            flan_t5_summarizer.unload_model()
+
+            # 2. Run Meta BART
+            bart_result = bart_summarizer.summarize(
+                source_text,
+                max_length=max_length,
+                min_length=min_length,
+            )
+            bart_eval = model_evaluator.evaluate_summary(
+                source_text=source_text,
+                summary=bart_result["summary"],
+                latency_seconds=bart_result["latency_seconds"],
+            )
+            bart_result["evaluation"] = bart_eval
+
+            # Free BART after generation
+            bart_summarizer.unload_model()
+        except Exception:
+            flan_t5_summarizer.unload_model()
+            bart_summarizer.unload_model()
+            raise
 
         # 3. Compute cross-model agreement (ROUGE similarity between FLAN-T5 and BART outputs)
         agreement_rouge = model_evaluator.compute_rouge(
             reference=flan_result["summary"],
             candidate=bart_result["summary"],
         )
+
 
         # 4. Determine winning model
         flan_f1 = flan_eval["rouge_scores"]["rouge1"]["f1"]
