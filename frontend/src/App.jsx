@@ -470,13 +470,18 @@ function App() {
           {/* Search Box */}
           <div className="search-container">
             <div className="search-box">
-              <span className="search-icon">⌕</span>
+              <span className="search-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
 
               <input
                 ref={searchInputRef}
                 id="search-box-input"
                 type="text"
-                placeholder="Search arXiv by topic or paper title (e.g. 'Attention Is All You Need', 'BERT', 'NLP')..."
+                placeholder="Search arXiv by topic or title (e.g. 'Attention Is All You Need', 'BERT', 'NLP')..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onKeyDown={(event) => {
@@ -910,10 +915,15 @@ function App() {
                             onChange={(e) => setSingleModel(e.target.value)}
                             className="model-select"
                           >
-                            <option value="flan-t5">Google FLAN-T5 (google/flan-t5-base)</option>
-                            <option value="bart">Meta BART (facebook/bart-large-cnn)</option>
-                            <option value="long-t5">Google LongT5 (google/long-t5-tglobal-base)</option>
+                            <option value="flan-t5">Google FLAN-T5 (google/flan-t5-base) — Fast Instruction Seq2Seq</option>
+                            <option value="bart">Meta BART (facebook/bart-large-cnn) — Deep Abstractive Synthesis</option>
+                            <option value="long-t5">Google LongT5 (google/long-t5-tglobal-base) — Long Context (4096 Tokens)</option>
                           </select>
+                          <div className="model-helper-note">
+                            {singleModel === "flan-t5" && "✦ Google FLAN-T5 (250M params): Instruction-tuned Seq2Seq • Focused factual extraction (1,024 token window)"}
+                            {singleModel === "bart" && "✦ Meta BART (406M params): Denoising Autoencoder • Fine-tuned on CNN/DailyMail for rich abstractive narrative"}
+                            {singleModel === "long-t5" && "✦ Google LongT5 (250M params): Transient Global Attention • Digests up to 8 chunks (~2,500 words / 4,096 tokens)"}
+                          </div>
                         </div>
 
                         <button
@@ -928,7 +938,11 @@ function App() {
                       {singleSummarizing && (
                         <div className="models-running-banner">
                           <div className="spinner"></div>
-                          <span>Generating abstractive summary using {singleModel}...</span>
+                          <span>
+                            {singleModel === "long-t5"
+                              ? "Ingesting multi-chunk context and generating LongT5 summary (Transient Global Attention)..."
+                              : `Generating abstractive summary using ${singleModel}...`}
+                          </span>
                         </div>
                       )}
 
@@ -961,6 +975,12 @@ function App() {
                             </button>
                           </div>
 
+                          {singleSummaryResult.scientific_note && (
+                            <div className="model-scientific-note">
+                              <strong>💡 Architecture Insight:</strong> {singleSummaryResult.scientific_note}
+                            </div>
+                          )}
+
                           <div className="eval-metrics-row" style={{ marginTop: "14px" }}>
                             <div className="metric-chip" title="ROUGE-1 F1">
                               <span className="chip-label">ROUGE-1 F1</span>
@@ -974,10 +994,16 @@ function App() {
                               <span className="chip-label">ROUGE-L F1</span>
                               <span className="chip-val">{singleSummaryResult.evaluation?.rouge_scores?.rougeL?.f1 || "—"}</span>
                             </div>
-                            <div className="metric-chip" title="Word count">
-                              <span className="chip-label">Word Count</span>
+                            <div className="metric-chip" title="Generated summary word count">
+                              <span className="chip-label">Output Words</span>
                               <span className="chip-val">{singleSummaryResult.word_count} words</span>
                             </div>
+                            {singleSummaryResult.input_words_analyzed && (
+                              <div className="metric-chip" title="Total document words ingested into model context">
+                                <span className="chip-label">Context Digested</span>
+                                <span className="chip-val highlight-green">{singleSummaryResult.input_words_analyzed} words</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}

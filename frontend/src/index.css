@@ -171,27 +171,45 @@ a {
 /* ================= SEARCH ================= */
 
 .search-container {
-  width: min(700px, 100%);
-  margin-top: 40px;
+  width: min(720px, 100%);
+  margin-top: 36px;
 }
 
 .search-box {
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(20, 20, 30, 0.9);
+  padding: 6px 8px 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(18, 18, 28, 0.95);
   border-radius: 16px;
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.35),
-    0 0 0 5px rgba(124, 92, 255, 0.03);
+    0 0 0 1px rgba(124, 92, 255, 0.08);
+  transition: all 0.25s ease;
+}
+
+.search-box:focus-within {
+  border-color: rgba(124, 92, 255, 0.5);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    0 0 0 4px rgba(124, 92, 255, 0.15);
 }
 
 .search-icon {
-  color: #88889a;
-  font-size: 26px;
-  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8c8ca5;
+  width: 40px;
+  height: 40px;
+  margin-left: 4px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.search-box:focus-within .search-icon {
+  color: #9d7cff;
 }
 
 .search-box input {
@@ -200,27 +218,57 @@ a {
   border: none;
   outline: none;
   background: transparent;
-  color: white;
-  padding: 14px 4px;
+  color: #f3f3f8;
+  padding: 12px 12px 12px 2px;
   font-size: 15px;
+  line-height: 1.5;
+  font-family: inherit;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  display: block;
+  box-sizing: border-box;
 }
 
 .search-box input::placeholder {
-  color: #666675;
+  color: #727288;
+  font-size: 14.5px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.search-box input:focus::placeholder {
+  opacity: 0.6;
 }
 
 .search-box button {
   border: none;
   border-radius: 11px;
-  padding: 13px 22px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: white;
   background: linear-gradient(135deg, #7c5cff, #5d50e6);
-  transition: 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-box button:hover {
+.search-box button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(100, 80, 255, 0.3);
+  box-shadow: 0 10px 25px rgba(100, 80, 255, 0.35);
+}
+
+.search-box button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 /* ================= BUTTONS ================= */
@@ -1438,6 +1486,118 @@ a {
   border-color: #4ed684;
   color: #ffffff;
   transform: translateY(-1px);
+}
+
+/* ================= SINGLE MODEL SUMMARIZER ================= */
+.single-model-box {
+  margin-top: 16px;
+}
+
+.single-model-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  background: rgba(18, 20, 32, 0.95);
+  border: 1px solid rgba(124, 92, 255, 0.25);
+  border-radius: 14px;
+  padding: 18px 22px;
+}
+
+.single-model-controls .control-group {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.single-model-controls .control-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.model-select {
+  background: rgba(10, 12, 22, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.model-select:focus {
+  border-color: #7c5cff;
+  box-shadow: 0 0 10px rgba(124, 92, 255, 0.3);
+}
+
+.model-helper-note {
+  font-size: 11.5px;
+  color: #9d7cff;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.single-summary-card {
+  margin-top: 18px;
+  background: rgba(18, 20, 32, 0.95);
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  border-radius: 14px;
+  padding: 22px;
+  text-align: left;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  animation: fadeIn 0.3s ease;
+}
+
+.single-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.single-summary-header h4 {
+  margin: 0;
+  font-size: 17px;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.single-summary-text {
+  font-size: 14px;
+  color: #e2e8f0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.model-arch-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.model-scientific-note {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(124, 92, 255, 0.08);
+  border-left: 3px solid #7c5cff;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.5;
 }
 
 /* ================= RESEARCH PAPER CHATBOT (Step 26) ================= */

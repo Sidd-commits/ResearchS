@@ -82,14 +82,15 @@ class LongT5Summarizer:
     def summarize(
         self,
         text: str,
-        max_length: int = 160,
-        min_length: int = 40,
+        max_length: int = 240,
+        min_length: int = 70,
         num_beams: int = 4,
-        length_penalty: float = 1.0,
+        length_penalty: float = 1.8,
     ) -> Dict[str, Any]:
         """
         Generates an abstractive summary of input academic text using LongT5.
-        LongT5 supports larger input windows (up to 4096 tokens).
+        LongT5 supports larger input windows (up to 4096 tokens) using
+        Transient Global (TGlobal) attention.
         """
         if not text or not text.strip():
             return {
@@ -98,14 +99,28 @@ class LongT5Summarizer:
                 "latency_seconds": 0.0,
                 "model": self.model_name,
                 "parameters": "~250M",
+                "architecture": "Google LongT5 (Transient Global Attention)",
+                "context_window": 4096,
             }
 
         self.load_model()
+        import re
         import torch
 
         start_time = time.time()
 
-        prompt = f"summarize: {text}"
+        # Clean any leading metadata lines (e.g. emails, department affiliations)
+        clean_text = text.strip()
+        lines = [line.strip() for line in clean_text.split("\n") if line.strip()]
+        # Skip leading lines if they look like author / affiliation / email noise
+        content_lines = []
+        for line in lines:
+            if re.search(r"@\w+|\b(?:department|university|institute|college|author|email)\b", line, re.IGNORECASE) and len(line) < 120:
+                continue
+            content_lines.append(line)
+        
+        filtered_text = " ".join(content_lines) if content_lines else clean_text
+        prompt = f"summarize: {filtered_text}"
 
         inputs = self.tokenizer(
             prompt,
@@ -146,6 +161,9 @@ class LongT5Summarizer:
             "model": self.model_name,
             "parameters": "~250M",
             "context_window": 4096,
+            "architecture": "Google LongT5 (Transient Global Attention)",
+            "training_paradigm": "Pretrained Base Foundation Model (C4 Span Pretraining)",
+            "scientific_note": "LongT5 scales input encoding to 4,096 tokens via TGlobal attention. As an un-fine-tuned base checkpoint, its generation performs factual seq2seq extraction.",
         }
 
 

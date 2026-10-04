@@ -33,7 +33,7 @@ _INFERENCE_LOCK = threading.Lock()
 class SummarizationService:
     """Orchestrates research paper summarization, comparison, and evaluation."""
 
-    def _prepare_paper_text(self, saved_filename: str) -> Dict[str, Any]:
+    def _prepare_paper_text(self, saved_filename: str, max_chunks: int = 3) -> Dict[str, Any]:
         """Loads and preprocessed the research paper text from storage."""
         file_path = UPLOAD_DIR / os.path.basename(saved_filename)
         if not file_path.exists():
@@ -48,9 +48,17 @@ class SummarizationService:
         elif len(chunks) == 1:
             source_text = chunks[0]["text"]
         else:
-            # Combine the first 2-3 most informative chunks (approx 600-800 words)
-            selected_chunks = chunks[:3]
-            source_text = " ".join(c["text"] for c in selected_chunks)
+            # Select chunks up to max_chunks (e.g. 3 for BART/FLAN-T5, up to 8 for LongT5)
+            selected_chunks = chunks[:max_chunks]
+            raw_text = " ".join(c["text"] for c in selected_chunks)
+
+            # Strip author / affiliation header if "Abstract" or "Introduction" appears in leading text
+            import re
+            match = re.search(r'\b(abstract|introduction)\b', raw_text, re.IGNORECASE)
+            if match and match.start() < 1200:
+                source_text = raw_text[match.start():]
+            else:
+                source_text = raw_text
 
         words = len(source_text.split())
         if words < 15:
@@ -73,18 +81,27 @@ class SummarizationService:
         max_length: int = 160,
         min_length: int = 40,
     ) -> Dict[str, Any]:
-        """Runs inference using a single specified model (flan-t5 or bart)."""
-        data = self._prepare_paper_text(saved_filename)
+        """Runs inference using a single specified model (flan-t5, bart, or long-t5)."""
+        model_key = model_type.lower().strip()
+        is_long = "long" in model_key
+
+        # LongT5 can ingest up to 4,096 tokens, so pass up to 8 chunks (~2,000+ words)
+        max_chunks = 8 if is_long else 3
+        data = self._prepare_paper_text(saved_filename, max_chunks=max_chunks)
         source_text = data["source_text"]
 
-        model_key = model_type.lower().strip()
         with _INFERENCE_LOCK:
             try:
-                if "long" in model_key:
+                if is_long:
+                    # Provide extended generation length (220-260 tokens) and higher beam search
+                    target_max = max_length if max_length != 160 else 240
+                    target_min = min_length if min_length != 40 else 70
                     result = long_t5_summarizer.summarize(
                         source_text,
-                        max_length=max_length,
-                        min_length=min_length,
+                        max_length=target_max,
+                        min_length=target_min,
+                        num_beams=4,
+                        length_penalty=1.8,
                     )
                 elif "flan" in model_key or "t5" in model_key:
                     result = flan_t5_summarizer.summarize(
@@ -108,6 +125,7 @@ class SummarizationService:
                     latency_seconds=result["latency_seconds"],
                 )
                 result["evaluation"] = eval_metrics
+                result["input_words_analyzed"] = len(source_text.split())
                 return result
             finally:
                 # Free memory immediately on completion
