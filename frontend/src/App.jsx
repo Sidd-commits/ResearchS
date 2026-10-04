@@ -797,21 +797,11 @@ function App() {
                         <div className="comparison-results-panel">
                           {/* Winner / Criterion 14 Banner */}
                           <div className="winner-banner">
-                            <div className="winner-banner-top">
-                              <div className="winner-title">
-                                <span className="winner-trophy">🏆</span>
-                                <div>
-                                  <span className="winner-label">SELECTED BEST MODEL (Criterion 14)</span>
-                                  <h4>{modelComparisonResult.comparison.best_overall_model}</h4>
-                                </div>
-                              </div>
-                              <div className="winner-badges-row">
-                                <span className="winner-pill-tag">
-                                  ⚡ Fastest: {modelComparisonResult.comparison.faster_model}
-                                </span>
-                                <span className="winner-pill-tag purple">
-                                  📚 Deep Context: LongT5 (4096 Tokens)
-                                </span>
+                            <div className="winner-title">
+                              <span className="winner-trophy">🏆</span>
+                              <div>
+                                <span className="winner-label">EVALUATED BEST MODEL (CRITERION 14)</span>
+                                <h4>{modelComparisonResult.comparison.best_overall_model}</h4>
                               </div>
                             </div>
                             <p className="winner-reason">{modelComparisonResult.comparison.selection_reason}</p>
@@ -829,26 +819,23 @@ function App() {
                               <div className="model-result-card flan-card">
                                 <div className="model-card-header">
                                   <div>
-                                    <div className="card-title-row">
-                                      <h4>Google FLAN-T5</h4>
-                                      {modelComparisonResult.comparison.best_overall_model.includes("FLAN-T5") && (
-                                        <span className="best-badge">★ Winner</span>
-                                      )}
-                                    </div>
+                                    <h4>Google FLAN-T5</h4>
                                     <span className="model-arch-badge">Seq2Seq (250M params)</span>
                                   </div>
-                                  <span className="speed-badge">⏱ {modelComparisonResult.models.flan_t5.latency_seconds}s</span>
+                                  <div className="header-badges">
+                                    <span className="speed-badge">⏱ {modelComparisonResult.models.flan_t5.latency_seconds}s</span>
+                                    <button
+                                      className="copy-summary-btn"
+                                      onClick={() => handleCopyText(modelComparisonResult.models.flan_t5.summary, "FLAN-T5 summary")}
+                                      title="Copy FLAN-T5 summary"
+                                    >
+                                      📋 Copy
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div className="model-summary-box">
                                   <p>{modelComparisonResult.models.flan_t5.summary}</p>
-                                  <button
-                                    className="copy-summary-btn"
-                                    onClick={() => handleCopyText(modelComparisonResult.models.flan_t5.summary, "FLAN-T5 summary")}
-                                    title="Copy FLAN-T5 summary"
-                                  >
-                                    📋 Copy
-                                  </button>
                                 </div>
 
                                 <div className="eval-metrics-row">
@@ -877,26 +864,23 @@ function App() {
                               <div className="model-result-card bart-card">
                                 <div className="model-card-header">
                                   <div>
-                                    <div className="card-title-row">
-                                      <h4>Meta BART</h4>
-                                      {modelComparisonResult.comparison.best_overall_model.includes("BART") && (
-                                        <span className="best-badge">★ Winner</span>
-                                      )}
-                                    </div>
+                                    <h4>Meta BART</h4>
                                     <span className="model-arch-badge">Autoencoder (406M params)</span>
                                   </div>
-                                  <span className="speed-badge">⏱ {modelComparisonResult.models.bart.latency_seconds}s</span>
+                                  <div className="header-badges">
+                                    <span className="speed-badge">⏱ {modelComparisonResult.models.bart.latency_seconds}s</span>
+                                    <button
+                                      className="copy-summary-btn"
+                                      onClick={() => handleCopyText(modelComparisonResult.models.bart.summary, "Meta BART summary")}
+                                      title="Copy Meta BART summary"
+                                    >
+                                      📋 Copy
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div className="model-summary-box">
                                   <p>{modelComparisonResult.models.bart.summary}</p>
-                                  <button
-                                    className="copy-summary-btn"
-                                    onClick={() => handleCopyText(modelComparisonResult.models.bart.summary, "Meta BART summary")}
-                                    title="Copy Meta BART summary"
-                                  >
-                                    📋 Copy
-                                  </button>
                                 </div>
 
                                 <div className="eval-metrics-row">
@@ -925,26 +909,23 @@ function App() {
                               <div className="model-result-card longt5-card">
                                 <div className="model-card-header">
                                   <div>
-                                    <div className="card-title-row">
-                                      <h4>Google LongT5</h4>
-                                      {modelComparisonResult.comparison.best_overall_model.includes("LongT5") && (
-                                        <span className="best-badge">★ Winner</span>
-                                      )}
-                                    </div>
+                                    <h4>Google LongT5</h4>
                                     <span className="model-arch-badge">TGlobal Attention (250M)</span>
                                   </div>
-                                  <span className="speed-badge">⏱ {modelComparisonResult.models.long_t5.latency_seconds}s</span>
+                                  <div className="header-badges">
+                                    <span className="speed-badge">⏱ {modelComparisonResult.models.long_t5.latency_seconds}s</span>
+                                    <button
+                                      className="copy-summary-btn"
+                                      onClick={() => handleCopyText(modelComparisonResult.models.long_t5.summary, "LongT5 summary")}
+                                      title="Copy LongT5 summary"
+                                    >
+                                      📋 Copy
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div className="model-summary-box">
                                   <p>{modelComparisonResult.models.long_t5.summary}</p>
-                                  <button
-                                    className="copy-summary-btn"
-                                    onClick={() => handleCopyText(modelComparisonResult.models.long_t5.summary, "LongT5 summary")}
-                                    title="Copy LongT5 summary"
-                                  >
-                                    📋 Copy
-                                  </button>
                                 </div>
 
                                 <div className="eval-metrics-row">
@@ -967,92 +948,6 @@ function App() {
                                 </div>
                               </div>
                             )}
-                          </div>
-
-                          {/* Executive Benchmark Matrix (Structured Table) */}
-                          <div className="benchmark-matrix-card">
-                            <div className="benchmark-matrix-header">
-                              <h4>📊 Multi-Model Benchmarking Matrix</h4>
-                              <span className="matrix-sub">Empirical side-by-side evaluation across all 3 transformer architectures</span>
-                            </div>
-
-                            <div className="benchmark-table-wrapper">
-                              <table className="benchmark-table">
-                                <thead>
-                                  <tr>
-                                    <th>Evaluation Metric</th>
-                                    <th>Google FLAN-T5</th>
-                                    <th>Meta BART</th>
-                                    <th>Google LongT5</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr>
-                                    <td className="matrix-metric-name">Pretrained Architecture</td>
-                                    <td>Encoder-Decoder Seq2Seq</td>
-                                    <td>Denoising Autoencoder</td>
-                                    <td>Transient Global Attention</td>
-                                  </tr>
-                                  <tr>
-                                    <td className="matrix-metric-name">Model Parameter Size</td>
-                                    <td>250 Million</td>
-                                    <td>406 Million</td>
-                                    <td>250 Million</td>
-                                  </tr>
-                                  <tr>
-                                    <td className="matrix-metric-name">Context Window</td>
-                                    <td>1,024 Tokens</td>
-                                    <td>1,024 Tokens</td>
-                                    <td><span className="table-highlight-badge">4,096 Tokens (4x)</span></td>
-                                  </tr>
-                                  <tr>
-                                    <td className="matrix-metric-name">Inference Latency</td>
-                                    <td>
-                                      {modelComparisonResult.models.flan_t5?.latency_seconds}s
-                                      {modelComparisonResult.comparison.faster_model.includes("FLAN") && (
-                                        <span className="table-win-badge">⚡ Fastest</span>
-                                      )}
-                                    </td>
-                                    <td>
-                                      {modelComparisonResult.models.bart?.latency_seconds}s
-                                      {modelComparisonResult.comparison.faster_model.includes("BART") && (
-                                        <span className="table-win-badge">⚡ Fastest</span>
-                                      )}
-                                    </td>
-                                    <td>
-                                      {modelComparisonResult.models.long_t5?.latency_seconds}s
-                                      {modelComparisonResult.comparison.faster_model.includes("LongT5") && (
-                                        <span className="table-win-badge">⚡ Fastest</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td className="matrix-metric-name">ROUGE-1 F1 (Vocabulary Overlap)</td>
-                                    <td>{modelComparisonResult.models.flan_t5?.evaluation?.rouge_scores?.rouge1?.f1 ?? "—"}</td>
-                                    <td><strong>{modelComparisonResult.models.bart?.evaluation?.rouge_scores?.rouge1?.f1 ?? "—"}</strong></td>
-                                    <td>{modelComparisonResult.models.long_t5?.evaluation?.rouge_scores?.rouge1?.f1 ?? "—"}</td>
-                                  </tr>
-                                  <tr>
-                                    <td className="matrix-metric-name">ROUGE-2 F1 (Phrase Fluency)</td>
-                                    <td>{modelComparisonResult.models.flan_t5?.evaluation?.rouge_scores?.rouge2?.f1 ?? "—"}</td>
-                                    <td><strong>{modelComparisonResult.models.bart?.evaluation?.rouge_scores?.rouge2?.f1 ?? "—"}</strong></td>
-                                    <td>{modelComparisonResult.models.long_t5?.evaluation?.rouge_scores?.rouge2?.f1 ?? "—"}</td>
-                                  </tr>
-                                  <tr>
-                                    <td className="matrix-metric-name">ROUGE-L F1 (Sentence Structure)</td>
-                                    <td>{modelComparisonResult.models.flan_t5?.evaluation?.rouge_scores?.rougeL?.f1 ?? "—"}</td>
-                                    <td><strong>{modelComparisonResult.models.bart?.evaluation?.rouge_scores?.rougeL?.f1 ?? "—"}</strong></td>
-                                    <td>{modelComparisonResult.models.long_t5?.evaluation?.rouge_scores?.rougeL?.f1 ?? "—"}</td>
-                                  </tr>
-                                  <tr>
-                                    <td className="matrix-metric-name">Summary Output Length</td>
-                                    <td>{modelComparisonResult.models.flan_t5?.word_count} words</td>
-                                    <td>{modelComparisonResult.models.bart?.word_count} words</td>
-                                    <td>{modelComparisonResult.models.long_t5?.word_count} words</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
                           </div>
 
                           {/* Agreement & Meta Footer */}

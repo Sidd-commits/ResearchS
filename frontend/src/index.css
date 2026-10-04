@@ -915,22 +915,15 @@ a {
   gap: 8px;
 }
 
-.winner-banner-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
 .winner-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .winner-trophy {
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .winner-label {
@@ -948,31 +941,6 @@ a {
   font-weight: 700;
   font-size: 16.5px;
   color: #7ce4a6;
-}
-
-.winner-badges-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.winner-pill-tag {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #6ee7b7;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.winner-pill-tag.purple {
-  background: rgba(168, 85, 247, 0.15);
-  border-color: rgba(168, 85, 247, 0.35);
-  color: #d8b4fe;
 }
 
 .winner-reason {
@@ -1003,16 +971,18 @@ a {
 .comparison-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 18px;
+  align-items: stretch;
 }
 
 .model-result-card {
   background: rgba(18, 20, 32, 0.95);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  height: 100%;
+  box-sizing: border-box;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
@@ -1025,39 +995,23 @@ a {
 }
 
 .bart-card {
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  border: 1px solid rgba(168, 85, 247, 0.4);
 }
 
 .longt5-card {
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
-
-.card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.best-badge {
-  background: rgba(234, 179, 8, 0.15);
-  border: 1px solid rgba(234, 179, 8, 0.4);
-  color: #facc15;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .model-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .model-card-header h4 {
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 700;
   color: #f8fafc;
   margin: 0;
@@ -1066,44 +1020,77 @@ a {
 .model-arch-badge {
   font-size: 11px;
   color: #94a3b8;
+  margin-top: 2px;
+  display: block;
+}
+
+.header-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .speed-badge {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 8px;
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   color: #38bdf8;
+  white-space: nowrap;
+}
+
+.copy-summary-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.copy-summary-btn:hover {
+  background: rgba(124, 92, 255, 0.2);
+  border-color: rgba(124, 92, 255, 0.4);
+  color: #ffffff;
 }
 
 .model-summary-box {
   background: rgba(10, 12, 20, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 12px;
-  min-height: 120px;
-  position: relative;
+  border-radius: 10px;
+  padding: 14px 16px;
+  flex: 1; /* Automatically stretches to fill remaining height */
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
 }
 
 .model-summary-box p {
-  font-size: 13px;
+  font-size: 13.5px;
   color: #e2e8f0;
-  line-height: 1.6;
+  line-height: 1.65;
   margin: 0;
+  flex: 1;
 }
 
 .eval-metrics-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
+  margin-top: auto; /* Pins metrics flush to the bottom */
 }
 
 .metric-chip {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 4px;
   text-align: center;
   display: flex;
@@ -1115,11 +1102,11 @@ a {
   font-size: 9px;
   text-transform: uppercase;
   color: #94a3b8;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
 }
 
 .chip-val {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #f1f5f9;
 }
@@ -1130,98 +1117,6 @@ a {
 
 .highlight-blue {
   color: #38bdf8 !important;
-}
-
-/* ================= BENCHMARK MATRIX TABLE ================= */
-
-.benchmark-matrix-card {
-  background: rgba(18, 20, 32, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 4px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-}
-
-.benchmark-matrix-header {
-  margin-bottom: 14px;
-  text-align: left;
-}
-
-.benchmark-matrix-header h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #f8fafc;
-  margin: 0;
-}
-
-.matrix-sub {
-  font-size: 12.5px;
-  color: #94a3b8;
-  margin-top: 3px;
-  display: block;
-}
-
-.benchmark-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.benchmark-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  text-align: left;
-}
-
-.benchmark-table th {
-  background: rgba(255, 255, 255, 0.04);
-  color: #cbd5e1;
-  font-weight: 600;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 12.5px;
-  white-space: nowrap;
-}
-
-.benchmark-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
-  vertical-align: middle;
-}
-
-.benchmark-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.matrix-metric-name {
-  font-weight: 600;
-  color: #cbd5e1;
-  white-space: nowrap;
-}
-
-.table-highlight-badge {
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  color: #38bdf8;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-.table-win-badge {
-  background: rgba(234, 179, 8, 0.15);
-  border: 1px solid rgba(234, 179, 8, 0.35);
-  color: #facc15;
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 6px;
-  margin-left: 6px;
-  display: inline-block;
 }
 
 .comparison-footer {
