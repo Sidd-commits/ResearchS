@@ -29,8 +29,13 @@ function App() {
   const [modelComparisonResult, setModelComparisonResult] = useState(null);
   const [summaryError, setSummaryError] = useState("");
 
-  // Chatbot modal & toast
-  const [showChatbotModal, setShowChatbotModal] = useState(false);
+  // Chatbot Q&A state (Step 26)
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
+
+  // Toast notification state
   const [toastMessage, setToastMessage] = useState("");
 
   const showToast = (msg) => {
@@ -303,6 +308,90 @@ function App() {
     await runSingleSummaryOnFilename(paper.saved_filename, targetModel);
   };
 
+  // 6. Interactive Chatbot Trigger
+  const handleOpenChatbot = async () => {
+    setActiveToolMode("chat");
+    setChatError("");
+
+    let paper = uploadedPaper;
+    if (!paper) {
+      showToast("Loading demo research paper for interactive chatbot...");
+      try {
+        paper = await ensurePaperLoaded();
+      } catch {
+        return;
+      }
+    }
+
+    setTimeout(() => {
+      workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
+  // 7. Send Question to PDF Chatbot
+  const handleSendChatMessage = async (presetQuestion = null) => {
+    const query = (presetQuestion || chatInput).trim();
+    if (!query) return;
+
+    let paper = uploadedPaper;
+    if (!paper) {
+      try {
+        paper = await ensurePaperLoaded();
+      } catch {
+        setChatError("Please select or upload a paper first.");
+        return;
+      }
+    }
+
+    const userMsg = {
+      id: Date.now(),
+      role: "user",
+      text: query,
+    };
+
+    setChatMessages((prev) => [...prev, userMsg]);
+    if (!presetQuestion) setChatInput("");
+    setChatLoading(true);
+    setChatError("");
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/papers/${encodeURIComponent(paper.saved_filename)}/chat`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: query, top_k: 3 }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to generate answer.");
+      }
+
+      const data = await response.json();
+      const assistantMsg = {
+        id: Date.now() + 1,
+        role: "assistant",
+        text: data.answer || "No direct answer was generated from the paper context.",
+        referenced_chunks: data.referenced_chunks || [],
+        latency_seconds: data.latency_seconds,
+        model: data.model,
+      };
+
+      setChatMessages((prev) => [...prev, assistantMsg]);
+    } catch (err) {
+      setChatError(err.message || "Failed to answer question.");
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleChatSubmit = (e) => {
+    e.preventDefault();
+    handleSendChatMessage();
+  };
+
   return (
     <div className="app">
       {/* Toast Notification */}
@@ -334,6 +423,13 @@ function App() {
             title="Generate single abstractive summary"
           >
             📝 Summarizer
+          </button>
+          <button
+            className="nav-text-btn"
+            onClick={handleOpenChatbot}
+            title="Chat interactively with research paper"
+          >
+            💬 Research Chatbot
           </button>
           <a
             href="#search-box-input"
@@ -444,6 +540,14 @@ function App() {
                       >
                         📝 Summarize
                       </button>
+                      <button
+                        className="arxiv-chat-btn"
+                        onClick={() => handleSelectArxivPaper(paper, "chat")}
+                        disabled={uploadLoading}
+                        title="Chat interactively with this specific arXiv paper"
+                      >
+                        💬 Chat
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -451,7 +555,7 @@ function App() {
             </div>
           )}
 
-          {/* 4 Interactive Action Buttons */}
+          {/* 5 Interactive Action Buttons */}
           <div className="hero-actions">
             <button
               className="primary-button cta-glow"
@@ -467,10 +571,20 @@ function App() {
               className="secondary-button"
               onClick={() => handleRunSingleSummarize("bart")}
               disabled={singleSummarizing || uploadLoading}
-              title="Generates abstractive summary using FLAN-T5 or BART"
+              title="Generates abstractive summary using FLAN-T5, BART, or LongT5"
             >
               <span>📝</span>
               {singleSummarizing ? "Summarizing..." : "Smart Summary"}
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={handleOpenChatbot}
+              disabled={uploadLoading}
+              title="Ask questions and get grounded answers from the paper"
+            >
+              <span>💬</span>
+              Ask Paper (Q&A)
             </button>
 
             <button
@@ -632,6 +746,12 @@ function App() {
                     >
                       📝 Single Model Summarizer
                     </button>
+                    <button
+                      className={`tool-tab-btn ${activeToolMode === "chat" ? "active" : ""}`}
+                      onClick={() => setActiveToolMode("chat")}
+                    >
+                      💬 Chat with Paper (Q&A)
+                    </button>
                   </div>
 
                   {/* MODE 1: MODEL COMPARISON */}
@@ -792,6 +912,7 @@ function App() {
                           >
                             <option value="flan-t5">Google FLAN-T5 (google/flan-t5-base)</option>
                             <option value="bart">Meta BART (facebook/bart-large-cnn)</option>
+                            <option value="long-t5">Google LongT5 (google/long-t5-tglobal-base)</option>
                           </select>
                         </div>
 
@@ -800,7 +921,7 @@ function App() {
                           onClick={() => handleRunSingleSummarize()}
                           disabled={singleSummarizing}
                         >
-                          {singleSummarizing ? "Summarizing..." : `Generate Summary with ${singleModel === "flan-t5" ? "FLAN-T5" : "BART"}`}
+                          {singleSummarizing ? "Summarizing..." : `Generate Summary with ${singleModel === "flan-t5" ? "FLAN-T5" : singleModel === "bart" ? "BART" : "LongT5"}`}
                         </button>
                       </div>
 
@@ -824,7 +945,7 @@ function App() {
                           <div className="single-summary-header">
                             <div>
                               <h4>{singleSummaryResult.model} Summary</h4>
-                              <span className="model-arch-badge">{singleSummaryResult.architecture} • {singleSummaryResult.model_id}</span>
+                              <span className="model-arch-badge">{singleSummaryResult.architecture || singleSummaryResult.model}</span>
                             </div>
                             <span className="speed-badge">⏱ {singleSummaryResult.latency_seconds}s</span>
                           </div>
@@ -860,6 +981,159 @@ function App() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* MODE 3: RESEARCH PAPER CHATBOT (Step 26) */}
+                  {activeToolMode === "chat" && (
+                    <div className="mode-content-box chat-mode-box">
+                      <div className="chat-interface-card">
+                        <div className="chat-card-header">
+                          <div className="chat-header-title">
+                            <span className="chat-icon">💬</span>
+                            <div>
+                              <h4>Research Paper Assistant (Context-Aware Q&A)</h4>
+                              <span className="model-arch-badge">TF-IDF Chunk Retrieval + Google FLAN-T5 (RAG)</span>
+                            </div>
+                          </div>
+                          <div className="chat-header-actions">
+                            {chatMessages.length > 0 && (
+                              <button
+                                className="chat-clear-btn"
+                                onClick={() => setChatMessages([])}
+                                title="Clear conversation"
+                              >
+                                Clear Chat ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Suggested Starter Questions */}
+                        <div className="chat-starters">
+                          <span className="starters-label">Suggested Starter Questions:</span>
+                          <div className="starters-pills">
+                            {[
+                              "What is the main technique or topic proposed in this paper?",
+                              "What datasets or experimental setups were evaluated?",
+                              "What are the key limitations or future directions?",
+                              "Summarize the core experimental findings and conclusion.",
+                            ].map((starter, i) => (
+                              <button
+                                key={i}
+                                className="starter-pill"
+                                onClick={() => handleSendChatMessage(starter)}
+                                disabled={chatLoading}
+                              >
+                                {starter}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Message Thread */}
+                        <div className="chat-messages-container">
+                          {chatMessages.length === 0 ? (
+                            <div className="chat-empty-state">
+                              <span className="chat-empty-icon">🤖</span>
+                              <h4>Ask anything about {uploadedPaper.filename}</h4>
+                              <p>
+                                Questions are answered with evidence directly retrieved from the paper's sentence-aware chunks using instruction-tuned Google FLAN-T5.
+                              </p>
+                            </div>
+                          ) : (
+                            chatMessages.map((msg, index) => (
+                              <div key={index} className={`chat-message-row ${msg.role}`}>
+                                <div className="chat-avatar">
+                                  {msg.role === "user" ? "👤" : "⚡"}
+                                </div>
+                                <div className="chat-bubble">
+                                  <div className="chat-bubble-header">
+                                    <span className="sender-name">{msg.role === "user" ? "You" : "ResearchS AI"}</span>
+                                    {msg.latency_seconds && (
+                                      <span className="chat-latency">⏱ {msg.latency_seconds}s</span>
+                                    )}
+                                  </div>
+                                  <div className="chat-bubble-body">
+                                    <p>{msg.text}</p>
+                                  </div>
+                                  {msg.role === "assistant" && (
+                                    <div className="chat-bubble-footer">
+                                      <button
+                                        className="chat-copy-btn"
+                                        onClick={() => handleCopyText(msg.text, "Answer")}
+                                      >
+                                        📋 Copy
+                                      </button>
+
+                                      {msg.referenced_chunks && msg.referenced_chunks.length > 0 && (
+                                        <details className="chat-citations-details">
+                                          <summary>
+                                            🔍 Cited Chunks ({msg.referenced_chunks.length})
+                                          </summary>
+                                          <div className="citations-list">
+                                            {msg.referenced_chunks.map((ref, idx) => (
+                                              <div key={idx} className="citation-snippet">
+                                                <div className="citation-header">
+                                                  <span className="citation-tag">Chunk #{ref.chunk_index}</span>
+                                                  <span className="similarity-tag">Similarity: {ref.similarity_score}</span>
+                                                </div>
+                                                <p className="citation-text">"{ref.preview}"</p>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </details>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+
+                          {chatLoading && (
+                            <div className="chat-message-row assistant">
+                              <div className="chat-avatar">⚡</div>
+                              <div className="chat-bubble loading">
+                                <div className="chat-typing-indicator">
+                                  <span></span>
+                                  <span></span>
+                                  <span></span>
+                                </div>
+                                <span className="typing-text">Retrieving relevant chunks & generating answer with FLAN-T5...</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {chatError && (
+                          <div className="upload-error-banner" style={{ margin: "10px 16px" }}>
+                            <span>⚠</span>
+                            <span>{chatError}</span>
+                            <button onClick={() => setChatError("")}>✕</button>
+                          </div>
+                        )}
+
+                        {/* Chat Input Bar */}
+                        <form className="chat-input-bar" onSubmit={handleChatSubmit}>
+                          <input
+                            type="text"
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            placeholder={`Ask a question about ${uploadedPaper.filename}...`}
+                            disabled={chatLoading}
+                            className="chat-text-input"
+                          />
+                          <button
+                            type="submit"
+                            className="chat-send-btn"
+                            disabled={chatLoading || !chatInput.trim()}
+                            title="Send question"
+                          >
+                            {chatLoading ? "..." : "Send ➤"}
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -925,16 +1199,16 @@ function App() {
 
             <div
               className="feature-card clickable"
-              onClick={() => setShowChatbotModal(true)}
-              title="Click to preview Research Chatbot"
+              onClick={handleOpenChatbot}
+              title="Click to open Research Chatbot"
             >
-              <div className="feature-icon orange">◌</div>
+              <div className="feature-icon orange">💬</div>
               <h3>Research Chatbot</h3>
               <p>
                 Ask questions about your uploaded research paper and receive
-                context-aware answers.
+                context-aware answers grounded in paper chunks.
               </p>
-              <span className="card-click-hint">Roadmap Step 26 Preview →</span>
+              <span className="card-click-hint">Open Chatbot (Live) →</span>
             </div>
           </div>
         </section>
@@ -973,32 +1247,6 @@ function App() {
           </div>
         </section>
       </main>
-
-      {/* Research Chatbot Modal (Step 26 Preview) */}
-      {showChatbotModal && (
-        <div className="modal-overlay" onClick={() => setShowChatbotModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🤖 Research Chatbot (Development Roadmap Step 26)</h3>
-              <button onClick={() => setShowChatbotModal(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <p>
-                The conversational research paper chatbot is scheduled for <strong>Step 26</strong> of our project roadmap.
-              </p>
-              <h4>How it will work:</h4>
-              <ol style={{ paddingLeft: "20px", marginTop: "8px", lineHeight: "1.8" }}>
-                <li>The paper's sentence-aware chunks (already extracted by PyMuPDF in Step 18) will be converted into dense embeddings.</li>
-                <li>When you ask a question, semantic similarity retrieves the top relevant chunks.</li>
-                <li>FLAN-T5 or Mistral 7B will generate an evidence-backed answer directly citing the paper.</li>
-              </ol>
-              <p style={{ marginTop: "12px", color: "#4ed684" }}>
-                ✓ Currently Completed & Live: Step 16 (PDF Upload), Step 17 & 18 (PyMuPDF Extraction & Chunking), Step 19 & 20 (FLAN-T5 & BART Summarization, ROUGE Benchmarking, and best_model.pkl Checkpoint).
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

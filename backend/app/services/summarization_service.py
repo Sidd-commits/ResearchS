@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 from app.evaluation.model_evaluator import model_evaluator
 from app.models.bart import bart_summarizer
 from app.models.flan_t5 import flan_t5_summarizer
+from app.models.long_t5 import long_t5_summarizer
 from app.services.pdf_service import pdf_service
 
 logger = logging.getLogger("researchs.services.summarization")
@@ -79,7 +80,13 @@ class SummarizationService:
         model_key = model_type.lower().strip()
         with _INFERENCE_LOCK:
             try:
-                if "flan" in model_key or "t5" in model_key:
+                if "long" in model_key:
+                    result = long_t5_summarizer.summarize(
+                        source_text,
+                        max_length=max_length,
+                        min_length=min_length,
+                    )
+                elif "flan" in model_key or "t5" in model_key:
                     result = flan_t5_summarizer.summarize(
                         source_text,
                         max_length=max_length,
@@ -92,7 +99,7 @@ class SummarizationService:
                         min_length=min_length,
                     )
                 else:
-                    raise ValueError(f"Unsupported model type: {model_type}. Choose 'flan-t5' or 'bart'.")
+                    raise ValueError(f"Unsupported model type: {model_type}. Choose 'flan-t5', 'bart', or 'long-t5'.")
 
                 # Evaluate generated summary
                 eval_metrics = model_evaluator.evaluate_summary(
@@ -106,6 +113,7 @@ class SummarizationService:
                 # Free memory immediately on completion
                 flan_t5_summarizer.unload_model()
                 bart_summarizer.unload_model()
+                long_t5_summarizer.unload_model()
 
     def compare_models(
         self,

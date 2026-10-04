@@ -35,17 +35,21 @@ flowchart TD
 
 ---
 
-## 2. Models Benchmarked: FLAN-T5 vs. BART (Criteria 4, 7, 10)
+## 2. Models Benchmarked: FLAN-T5 vs. BART vs. LongT5 vs. Mistral 7B (Criteria 4, 7, 10)
 
-| Feature | **Google FLAN-T5** (`google/flan-t5-base`) | **Meta BART** (`facebook/bart-large-cnn`) |
-| :--- | :--- | :--- |
-| **Creator** | Google Research | Meta AI (Facebook) |
-| **Architecture** | Encoder-Decoder (T5 / Text-to-Text Transfer) | Encoder-Decoder (Bidirectional + Autoregressive) |
-| **Parameters** | ~250 Million | ~406 Million |
-| **Pretraining Objective** | Multi-task instruction tuning on 1,800+ tasks | Denoising autoencoder (masking, token deletion, document rotation) |
-| **Fine-Tuning** | Instruction-following dataset | CNN / DailyMail summarization benchmark |
-| **Strengths** | Faster inference, strictly factual, concise | Richer vocabulary, fluid narrative abstractive synthesis |
-| **Hardware Used** | NVIDIA GeForce RTX 2050 (CUDA float16) | NVIDIA GeForce RTX 2050 (CUDA float16) |
+| Feature | **Google FLAN-T5** | **Meta BART** | **Google LongT5** | **Mistral 7B (Baseline)** |
+| :--- | :--- | :--- | :--- | :--- |
+| **Creator** | Google Research | Meta AI (Facebook) | Google Research | Mistral AI |
+| **Architecture** | Encoder-Decoder (T5) | Encoder-Decoder (BART) | Encoder-Decoder (TGlobal) | Decoder-Only (Autoregressive) |
+| **Parameters** | ~250 Million | ~406 Million | ~250 Million | 7.3 Billion |
+| **Max Context** | 1,024 tokens | 1,024 tokens | **4,096+ tokens** | 8,192 tokens |
+| **Attention Mechanism** | Dense Self-Attention | Dense Self-Attention | Transient Global (Local + Global tokens) | Grouped-Query (GQA) + Sliding Window |
+| **Strengths** | Fast inference, factual, Q&A RAG | Rich vocabulary, fluid narrative summary | Long-document scientific papers | Deep reasoning, generative breadth |
+| **VRAM Footprint** | ~0.9 GB (CUDA fp16) | ~1.5 GB (CUDA fp16) | ~1.1 GB (CUDA fp16) | ~14 GB (fp16) / ~4.5 GB (int4) |
+| **Hardware Used** | RTX 2050 (Live) | RTX 2050 (Live) | RTX 2050 (Live) | Theoretical / Cloud comparison |
+
+### **Viva Question: Why compare Seq2Seq (BART/T5) with Decoder-only (Mistral 7B)?**
+> "Encoder-decoder models like BART and LongT5 have separate bidirectional encoders specifically architected for full-document comprehension, making them highly compact, low-latency, and safe for edge deployment on 4GB consumer GPUs. Decoder-only 7B models have massive parameter counts (7B vs ~300M) that require severe quantization or heavy server hardware, demonstrating the superior efficiency of task-specific Seq2Seq transformers for real-time document summarization."
 
 ---
 

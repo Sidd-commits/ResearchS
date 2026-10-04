@@ -262,15 +262,44 @@ def import_arxiv_paper(req: ArxivImportRequest):
     }
 
 
+class ChatRequest(BaseModel):
+    question: str
+    top_k: Optional[int] = 3
+
+
+@app.post("/papers/{saved_filename}/chat")
+def chat_with_paper(saved_filename: str, req: ChatRequest):
+    """
+    Step 26: PDF-Based Interactive Research Paper Chatbot (Q&A).
+    Retrieves context-relevant chunks via TF-IDF and generates
+    grounded answers using Google FLAN-T5.
+    """
+    from app.services.qa_service import qa_service
+
+    try:
+        result = qa_service.answer_question(
+            saved_filename=saved_filename,
+            question=req.question,
+            top_k=req.top_k or 3,
+        )
+        return result
+    except FileNotFoundError as err:
+        raise HTTPException(status_code=404, detail=str(err))
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Question answering failed: {str(exc)}")
+
+
 @app.post("/papers/{saved_filename}/summarize")
 def summarize_paper(
     saved_filename: str,
-    model_type: str = Query(default="flan-t5", description="Model: 'flan-t5' or 'bart'"),
+    model_type: str = Query(default="flan-t5", description="Model: 'flan-t5', 'bart', or 'long-t5'"),
     max_length: int = Query(default=160, ge=40, le=512),
     min_length: int = Query(default=40, ge=10, le=200),
 ):
     """
-    Step 19 (FLAN-T5) & Step 20 (BART):
+    Step 19 (FLAN-T5), Step 20 (BART), Step 21 (LongT5):
     Generates an abstractive summary of an uploaded research paper
     using the specified pretrained transformer model.
     """

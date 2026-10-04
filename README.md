@@ -22,6 +22,11 @@
 * **Pretrained Transformer Inference**:
   * **Google FLAN-T5** (`google/flan-t5-base`, 250M parameters) — Instruction Seq2Seq.
   * **Meta BART** (`facebook/bart-large-cnn`, 406M parameters) — Denoising Autoencoder Seq2Seq.
+  * **Google LongT5** (`google/long-t5-tglobal-base`, 250M parameters) — Transient Global long-context (4096 tokens).
+* **Interactive PDF Research Chatbot (Step 26 & Features 9/10)**:
+  * Context-aware Question Answering grounded in academic sentence chunks.
+  * Fast TF-IDF chunk retrieval + zero-shot generation using Google FLAN-T5.
+  * Displays cited chunks, similarity confidence scores, and preview snippets.
 * **Empirical Benchmarking & Scoring**:
   * Unigram overlap (**ROUGE-1 F1**).
   * Bigram phrasing fluency (**ROUGE-2 F1**).
@@ -64,11 +69,13 @@ ResearchS/
 │   │   │   └── model_evaluator.py     # ROUGE-1/2/L scoring & .pkl serialization
 │   │   ├── models/
 │   │   │   ├── bart.py                # Meta BART wrapper (facebook/bart-large-cnn)
-│   │   │   └── flan_t5.py             # Google FLAN-T5 wrapper (google/flan-t5-base)
+│   │   │   ├── flan_t5.py             # Google FLAN-T5 wrapper (google/flan-t5-base)
+│   │   │   └── long_t5.py             # Google LongT5 wrapper (google/long-t5-tglobal-base)
 │   │   ├── services/
 │   │   │   ├── pdf_service.py         # PyMuPDF extraction, cleaning, chunking
+│   │   │   ├── qa_service.py          # TF-IDF RAG & FLAN-T5 Paper Chatbot
 │   │   │   └── summarization_service.py # Comparative pipeline orchestrator
-│   │   └── main.py                    # FastAPI routes, arXiv integration, CORS
+│   │   └── main.py                    # FastAPI routes, arXiv integration, Chatbot Q&A
 │   ├── uploads/                       # PDF uploads (gitignored for privacy)
 │   ├── best_model.pkl                 # Serialized winning model checkpoint artifact
 │   └── requirements.txt               # Pinned Python dependencies

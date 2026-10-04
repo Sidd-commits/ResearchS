@@ -19,21 +19,24 @@ This document outlines the architectural design, data flow, memory lifecycle man
 |  [POST /upload-pdf]          [POST /import-arxiv-paper]                  |
 |  [GET  /search-arxiv]        [GET  /sample-paper]                        |
 |  [POST /papers/{id}/compare] [POST /papers/{id}/summarize]               |
+|  [POST /papers/{id}/chat]    [GET  /best-model]                          |
 +------------------------------------+-------------------------------------+
                                      |
                                      v
 +--------------------------------------------------------------------------+
-|                     PREPROCESSING PIPELINE (pdf_service)                 |
+|                     PREPROCESSING & RETRIEVAL PIPELINE                   |
 |  1. Text Extraction (PyMuPDF / C-bindings with PyPDF fallback)           |
 |  2. Academic De-noising (Regex ligature repair, citation normalization)   |
 |  3. Sentence-Aware Sliding Window Chunking (overlap = 200 chars)         |
+|  4. TF-IDF Chunk Ranking & Dense Query Matching for RAG Q&A              |
 +------------------------------------+-------------------------------------+
                                      |
                                      v
 +--------------------------------------------------------------------------+
 |                 HUGGING FACE MODEL RUNTIME (PyTorch CUDA)                |
-|  • Model A: Google FLAN-T5 (google/flan-t5-base)                         |
-|  • Model B: Meta BART (facebook/bart-large-cnn)                          |
+|  • Model A: Google FLAN-T5 (google/flan-t5-base) — Factual & Q&A RAG     |
+|  • Model B: Meta BART (facebook/bart-large-cnn) — Deep Abstractive       |
+|  • Model C: Google LongT5 (google/long-t5-tglobal-base) — 4096 TGlobal   |
 |  • Sequential Execution & Memory Unloading:                              |
 |      load -> infer -> unload -> torch.cuda.empty_cache() -> gc.collect()  |
 +------------------------------------+-------------------------------------+
@@ -79,12 +82,14 @@ ResearchS/
 │   │   ├── models/
 │   │   │   ├── __init__.py
 │   │   │   ├── bart.py                # Meta BART (facebook/bart-large-cnn)
-│   │   │   └── flan_t5.py             # Google FLAN-T5 (google/flan-t5-base)
+│   │   │   ├── flan_t5.py             # Google FLAN-T5 (google/flan-t5-base)
+│   │   │   └── long_t5.py             # Google LongT5 (google/long-t5-tglobal-base)
 │   │   ├── services/
 │   │   │   ├── __init__.py
 │   │   │   ├── pdf_service.py         # PyMuPDF extraction, cleaning & chunking
+│   │   │   ├── qa_service.py          # TF-IDF RAG & FLAN-T5 Paper Chatbot
 │   │   │   └── summarization_service.py # Orchestrator for inference
-│   │   └── main.py                    # FastAPI routes, CORS, arXiv import
+│   │   └── main.py                    # FastAPI routes, CORS, arXiv import, Chatbot Q&A
 │   ├── uploads/                       # Temporary storage (gitignored)
 │   ├── best_model.pkl                 # Evaluated winning model checkpoint
 │   └── requirements.txt               # Pinned dependencies
