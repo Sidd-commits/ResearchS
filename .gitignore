@@ -53,3 +53,7 @@ backend/uploads/*
 
 # Logs
 *.log
+
+# Personal Viva & Exam Prep (Private, never committed)
+viva_prep/
+*.zip
