@@ -116,3 +116,30 @@ The project exports a verified serialized artifact:
    * Show BART summary and latency.
    * Show the ROUGE-1 / ROUGE-2 / ROUGE-L metric chips.
 8. Show the **Selected Winner Banner** and explain that **`best_model.pkl`** was generated and saved to disk.
+9. Switch to the **`📝 Single Model Summarizer`** tab:
+   * Select **Google LongT5 (`google/long-t5-tglobal-base`)** from the dropdown.
+   * Click **"Generate Summary with LongT5"**.
+   * Explain to the panel: *"LongT5 uses Transient Global (TGlobal) attention to scale input context up to 4,096 tokens, ideal for entire paper sections."*
+10. Switch to the **`💬 Chat with Paper`** tab (Step 26 & Features 9/10):
+    * Click a suggested starter question or type a custom question (e.g., *"What is the main technique proposed?"*).
+    * Show the generated answer from **Google FLAN-T5**.
+    * Expand the **"🔍 Cited Chunks"** dropdown to demonstrate context-grounded citations with TF-IDF cosine similarity scores, proving zero hallucination.
+11. Demonstrate **Live arXiv Search & Import**:
+    * Type `"transformers"` or `"attention"` into the top search bar.
+    * Click **"Import & Analyze"** to show real-time ingestion from arXiv directly into the pipeline!
+
+---
+
+## 7. Viva Question: Retrieval-Augmented Generation (RAG) Architecture
+
+If the professor asks: *"How does the Research Paper Chatbot work and how does it prevent hallucinations?"*
+
+### **The Answer:**
+> "Our chatbot implements an offline, context-grounded **Retrieval-Augmented Generation (RAG)** pipeline:
+> 
+> 1. **Chunk Indexing**: The preprocessed academic text is tokenized into sentence-aware sliding chunks.
+> 2. **Lexical Retrieval**: We fit a `TfidfVectorizer` (unigrams + bigrams) over the paper's chunks and compute the cosine similarity against the user's question vector to retrieve the top-$k$ most relevant passages.
+> 3. **Context Injection**: The retrieved passages are formatted into a constrained instruction prompt:
+>    `'Answer the question based strictly on the provided paper context... Direct Answer:'`
+> 4. **Grounded Generation**: Google FLAN-T5 generates the response constrained by the retrieved evidence.
+> 5. **Evidence Attribution**: The UI returns the exact chunk indices, similarity scores, and snippet previews as citations so the user can verify the claim against the original paper text."

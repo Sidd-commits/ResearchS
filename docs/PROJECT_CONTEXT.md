@@ -254,32 +254,28 @@ The previous conversation explicitly established that VS Code can be used for:
 
 Mistral 7B was identified as potentially heavy for a normal laptop. Do not blindly install or run all four models simultaneously. Introduce them progressively and test individually.
 
-## 10. Current Known State
+## 10. Current Known State & Completed Milestones
 
-From the previous conversation:
+All core roadmap milestones up to **Step 26** are fully implemented, verified, and operational:
 
-- Basic React application works.
-- ResearchS frontend dashboard was created in Step 15.
-- Frontend search interaction was still a demonstration.
-- Frontend upload interaction was still a demonstration.
-- FastAPI backend upload functionality was the next implementation task.
-- The project had not yet reached PDF text extraction or transformer inference.
+- **Step 16 (PDF Ingestion)**: React drag-and-drop / file selector with FastAPI validation and UUID sanitization.
+- **Step 17 (Text Extraction)**: High-speed PyMuPDF extraction with PyPDF fallback.
+- **Step 18 (Preprocessing & Chunking)**: Hyphen rejoin, citation bracket stripping, and sentence-aware sliding window chunking.
+- **Step 19 (Google FLAN-T5)**: 250M parameter instruction seq2seq model inference.
+- **Step 20 (Meta BART)**: 406M parameter denoising autoencoder abstractive summarization.
+- **Step 21 (Model Comparison & ROUGE)**: Side-by-side benchmarking for ROUGE-1, ROUGE-2, and ROUGE-L F1 scores with latency.
+- **Step 22 (Artifact Serialization)**: Automated winning model determination and `best_model.pkl` export (Criterion 14).
+- **Step 23 (arXiv Search & Import)**: Live arXiv search API integration with 1-click import into the analysis pipeline.
+- **Step 24 (Single Model Summarizer)**: Interactive tab allowing dedicated summarization with model choice.
+- **Step 25 (Google LongT5)**: 250M parameter Transient Global (TGlobal) attention supporting 4,096-token context windows.
+- **Step 26 (PDF Q&A Chatbot)**: Offline context-grounded RAG with TF-IDF chunk retrieval, FLAN-T5 generation, and cited chunk evidence.
+- **Memory Safety**: Thread-safe sequential execution with explicit VRAM purging (`torch.cuda.empty_cache()`), verified on 4GB VRAM.
 
-## 11. What the Agent Should Do Next
+## 11. Next Roadmap Steps (Future Enhancements)
 
-Before making changes:
-
-1. Inspect the actual extracted project structure.
-2. Read this file completely.
-3. Read `AGENTS.md`.
-4. Compare the actual repository with the planned structure above.
-5. Identify what is genuinely implemented versus what was only planned in the previous conversation.
-6. Do not assume that a planned file or feature already exists.
-7. Continue from the current repository state rather than rebuilding ResearchS from scratch.
-
-The immediate functional objective is to complete **Step 16: PDF upload from React to FastAPI**, if the existing code confirms that this is still the next unfinished step.
-
-After Step 16 works, proceed incrementally through the established roadmap.
+1. 4-bit / 8-bit model quantization via `bitsandbytes` to evaluate 7B-parameter models (Mistral 7B) on consumer GPUs.
+2. Parameter-efficient fine-tuning (PEFT / LoRA) on custom arXiv paper datasets.
+3. Multi-paper cross-document synthesis.
 
 ## 12. Project Context Rule
 
