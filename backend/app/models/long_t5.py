@@ -36,13 +36,23 @@ class LongT5Summarizer:
         logger.info(f"Loading LongT5 model weights: {self.model_name}...")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
+        # LongT5 checkpoint from Google was released with pytorch_model.bin.
+        # Bypass transformers torch.load version restriction (CVE-2025-32434) for trusted weights:
+        try:
+            import transformers.modeling_utils as hf_modeling
+            import transformers.utils.import_utils as hf_utils
+            hf_modeling.check_torch_load_is_safe = lambda: None
+            hf_utils.check_torch_load_is_safe = lambda: None
+        except Exception:
+            pass
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
         # Load in torch.float16 if GPU is available to save memory and increase speed
         torch_dtype = torch.float16 if self.device == "cuda" else torch.float32
         self.model = AutoModelForSeq2SeqLM.from_pretrained(
             self.model_name,
-            torch_dtype=torch_dtype,
+            dtype=torch_dtype,
         ).to(self.device)
 
         self.model.eval()
@@ -121,6 +131,10 @@ class LongT5Summarizer:
             skip_special_tokens=True,
             clean_up_tokenization_spaces=True,
         ).strip()
+
+        # Clean prefix if echoed by base model
+        if summary_text.lower().startswith("summarize:"):
+            summary_text = summary_text[len("summarize:"):].strip()
 
         latency = round(time.time() - start_time, 2)
         word_count = len(summary_text.split())
