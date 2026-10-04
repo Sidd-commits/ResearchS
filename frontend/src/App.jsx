@@ -481,7 +481,7 @@ function App() {
                 ref={searchInputRef}
                 id="search-box-input"
                 type="text"
-                placeholder="Search arXiv by topic or title (e.g. 'Attention Is All You Need', 'BERT', 'NLP')..."
+                placeholder="Search arXiv papers (e.g. 'Attention Is All You Need', 'BERT')..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onKeyDown={(event) => {
