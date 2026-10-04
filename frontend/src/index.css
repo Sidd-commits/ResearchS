@@ -912,20 +912,67 @@ a {
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.winner-banner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .winner-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  color: #7ce4a6;
+  gap: 10px;
+}
+
+.winner-trophy {
+  font-size: 24px;
+}
+
+.winner-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  color: #a7f3d0;
+  margin-bottom: 2px;
+  display: block;
 }
 
 .winner-title h4 {
   margin: 0;
   font-weight: 700;
+  font-size: 16.5px;
+  color: #7ce4a6;
+}
+
+.winner-badges-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.winner-pill-tag {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.winner-pill-tag.purple {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #d8b4fe;
 }
 
 .winner-reason {
@@ -936,12 +983,13 @@ a {
 }
 
 .pkl-tag {
-  margin-top: 6px;
+  margin-top: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
   color: #94a3b8;
+  flex-wrap: wrap;
 }
 
 .pkl-tag code {
@@ -954,7 +1002,7 @@ a {
 
 .comparison-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
@@ -965,7 +1013,11 @@ a {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.model-result-card:hover {
+  transform: translateY(-2px);
 }
 
 .flan-card {
@@ -974,6 +1026,28 @@ a {
 
 .bart-card {
   border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.longt5-card {
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.best-badge {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #facc15;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .model-card-header {
@@ -1010,6 +1084,7 @@ a {
   border-radius: 8px;
   padding: 12px;
   min-height: 120px;
+  position: relative;
 }
 
 .model-summary-box p {
@@ -1049,16 +1124,118 @@ a {
   color: #f1f5f9;
 }
 
+.highlight-green {
+  color: #4ed684 !important;
+}
+
+.highlight-blue {
+  color: #38bdf8 !important;
+}
+
+/* ================= BENCHMARK MATRIX TABLE ================= */
+
+.benchmark-matrix-card {
+  background: rgba(18, 20, 32, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.benchmark-matrix-header {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.benchmark-matrix-header h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.matrix-sub {
+  font-size: 12.5px;
+  color: #94a3b8;
+  margin-top: 3px;
+  display: block;
+}
+
+.benchmark-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.benchmark-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.benchmark-table th {
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.benchmark-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+
+.benchmark-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.matrix-metric-name {
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+.table-highlight-badge {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.table-win-badge {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #facc15;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  display: inline-block;
+}
+
 .comparison-footer {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   font-size: 12px;
   color: #94a3b8;
-  padding: 10px 4px 0;
+  padding: 12px 4px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .comparison-grid {
     grid-template-columns: 1fr;
   }

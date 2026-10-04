@@ -136,20 +136,20 @@ class SummarizationService:
     def compare_models(
         self,
         saved_filename: str,
-        max_length: int = 160,
+        max_length: int = 180,
         min_length: int = 40,
     ) -> Dict[str, Any]:
         """
-        Runs both Google FLAN-T5 and Meta BART on the exact same research paper text,
+        Runs Google FLAN-T5, Meta BART, and Google LongT5 on the exact same research paper text,
         benchmarks their speed, computes ROUGE scores, selects the best model,
         and exports 'best_model.pkl' (fulfilling Professor Criteria 4, 7, 8, & 14).
         Uses sequential offloading so peak memory stays ultra-low.
         """
-        data = self._prepare_paper_text(saved_filename)
+        data = self._prepare_paper_text(saved_filename, max_chunks=4)
         source_text = data["source_text"]
         preprocessed = data["preprocessed_meta"]
 
-        logger.info(f"Running comparative inference on: {saved_filename}...")
+        logger.info(f"Running comparative inference (FLAN-T5, BART, LongT5) on: {saved_filename}...")
 
         with _INFERENCE_LOCK:
             try:
@@ -165,8 +165,6 @@ class SummarizationService:
                     latency_seconds=flan_result["latency_seconds"],
                 )
                 flan_result["evaluation"] = flan_eval
-
-                # Free FLAN-T5 from RAM/GPU before loading BART
                 flan_t5_summarizer.unload_model()
 
                 # 2. Run Meta BART
@@ -181,48 +179,92 @@ class SummarizationService:
                     latency_seconds=bart_result["latency_seconds"],
                 )
                 bart_result["evaluation"] = bart_eval
-
-                # Free BART after generation
                 bart_summarizer.unload_model()
+
+                # 3. Run Google LongT5 (Transient Global Attention)
+                long_t5_result = long_t5_summarizer.summarize(
+                    source_text,
+                    max_length=max_length,
+                    min_length=min_length,
+                )
+                long_t5_eval = model_evaluator.evaluate_summary(
+                    source_text=source_text,
+                    summary=long_t5_result["summary"],
+                    latency_seconds=long_t5_result["latency_seconds"],
+                )
+                long_t5_result["evaluation"] = long_t5_eval
+                long_t5_summarizer.unload_model()
+
             except Exception:
                 flan_t5_summarizer.unload_model()
                 bart_summarizer.unload_model()
+                long_t5_summarizer.unload_model()
                 raise
 
-        # 3. Compute cross-model agreement (ROUGE similarity between FLAN-T5 and BART outputs)
-        agreement_rouge = model_evaluator.compute_rouge(
+        # 4. Compute cross-model agreement
+        agreement_flan_bart = model_evaluator.compute_rouge(
             reference=flan_result["summary"],
             candidate=bart_result["summary"],
         )
+        agreement_bart_longt5 = model_evaluator.compute_rouge(
+            reference=bart_result["summary"],
+            candidate=long_t5_result["summary"],
+        )
 
-
-        # 4. Determine winning model
+        # 5. Determine winning model across all 3 architectures
         flan_f1 = flan_eval["rouge_scores"]["rouge1"]["f1"]
         bart_f1 = bart_eval["rouge_scores"]["rouge1"]["f1"]
+        longt5_f1 = long_t5_eval["rouge_scores"]["rouge1"]["f1"]
 
-        # Selection criterion: balanced ROUGE F1 score and readability
-        if bart_f1 >= flan_f1:
-            best_model_name = "Meta BART (facebook/bart-large-cnn)"
-            best_metadata = bart_result
-            selection_reason = (
-                f"Meta BART achieved higher ROUGE-1 F1 ({bart_f1:.4f} vs {flan_f1:.4f}), "
-                "producing richer abstractive synthesis."
-            )
-        else:
-            best_model_name = "Google FLAN-T5 (google/flan-t5-base)"
-            best_metadata = flan_result
-            selection_reason = (
-                f"Google FLAN-T5 achieved higher ROUGE-1 F1 ({flan_f1:.4f} vs {bart_f1:.4f}) "
-                f"with faster inference latency ({flan_result['latency_seconds']}s)."
-            )
+        candidates = [
+            {
+                "name": "Meta BART (facebook/bart-large-cnn)",
+                "display": "Meta BART",
+                "result": bart_result,
+                "f1": bart_f1,
+                "latency": bart_result["latency_seconds"],
+                "reason": (
+                    f"Meta BART achieved the highest ROUGE-1 F1 ({bart_f1:.4f}), "
+                    "producing rich abstractive narrative synthesis."
+                ),
+            },
+            {
+                "name": "Google FLAN-T5 (google/flan-t5-base)",
+                "display": "Google FLAN-T5",
+                "result": flan_result,
+                "f1": flan_f1,
+                "latency": flan_result["latency_seconds"],
+                "reason": (
+                    f"Google FLAN-T5 achieved high ROUGE-1 F1 ({flan_f1:.4f}) "
+                    f"with fast instruction-tuned Seq2Seq inference ({flan_result['latency_seconds']}s)."
+                ),
+            },
+            {
+                "name": "Google LongT5 (google/long-t5-tglobal-base)",
+                "display": "Google LongT5",
+                "result": long_t5_result,
+                "f1": longt5_f1,
+                "latency": long_t5_result["latency_seconds"],
+                "reason": (
+                    f"Google LongT5 achieved the highest ROUGE-1 F1 ({longt5_f1:.4f}) "
+                    "leveraging Transient Global Attention for extended scientific text."
+                ),
+            },
+        ]
 
-        # 5. Export .pkl file for Professor Criterion 14
+        best = max(candidates, key=lambda c: c["f1"])
+        best_model_name = best["name"]
+        best_metadata = best["result"]
+        selection_reason = best["reason"]
+
+        fastest = min(candidates, key=lambda c: c["latency"])
+        faster_model = fastest["display"]
+
+        # 6. Export .pkl file for Professor Criterion 14
         pkl_path = model_evaluator.export_best_model_pickle(
             best_model_name=best_model_name,
             model_metadata=best_metadata,
         )
-
-        faster_model = "Google FLAN-T5" if flan_result["latency_seconds"] <= bart_result["latency_seconds"] else "Meta BART"
 
         return {
             "status": "success",
@@ -231,14 +273,18 @@ class SummarizationService:
             "models": {
                 "flan_t5": flan_result,
                 "bart": bart_result,
+                "long_t5": long_t5_result,
             },
             "comparison": {
                 "faster_model": faster_model,
                 "flan_t5_latency": flan_result["latency_seconds"],
                 "bart_latency": bart_result["latency_seconds"],
+                "long_t5_latency": long_t5_result["latency_seconds"],
                 "flan_t5_rouge1_f1": flan_f1,
                 "bart_rouge1_f1": bart_f1,
-                "cross_model_agreement_rouge1_f1": agreement_rouge["rouge1"]["f1"],
+                "long_t5_rouge1_f1": longt5_f1,
+                "cross_model_agreement_rouge1_f1": agreement_flan_bart["rouge1"]["f1"],
+                "cross_model_agreement_bart_longt5_rouge1_f1": agreement_bart_longt5["rouge1"]["f1"],
                 "best_overall_model": best_model_name,
                 "selection_reason": selection_reason,
                 "best_model_pkl_saved": os.path.basename(pkl_path),
