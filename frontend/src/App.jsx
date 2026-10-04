@@ -818,20 +818,8 @@ function App() {
                             {modelComparisonResult.models.flan_t5 && (
                               <div className="model-result-card flan-card">
                                 <div className="model-card-header">
-                                  <div className="header-meta-row">
-                                    <span className="comparison-arch-pill pill-flan">Seq2Seq • 250M</span>
-                                    <div className="header-actions">
-                                      <span className="speed-badge">⏱ {modelComparisonResult.models.flan_t5.latency_seconds}s</span>
-                                      <button
-                                        className="copy-summary-btn"
-                                        onClick={() => handleCopyText(modelComparisonResult.models.flan_t5.summary, "FLAN-T5 summary")}
-                                        title="Copy FLAN-T5 summary"
-                                      >
-                                        📋 Copy
-                                      </button>
-                                    </div>
-                                  </div>
                                   <h4 className="model-card-title">Google FLAN-T5</h4>
+                                  <span className="speed-badge">⏱ {modelComparisonResult.models.flan_t5.latency_seconds}s</span>
                                 </div>
 
                                 <div className="model-card-body">
@@ -839,17 +827,9 @@ function App() {
                                 </div>
 
                                 <div className="model-card-metrics">
-                                  <div className="metric-chip" title="ROUGE-1 F1: Unigram overlap with paper">
+                                  <div className="metric-chip" title="ROUGE-1 F1: Unigram lexical overlap">
                                     <span className="chip-label">ROUGE-1</span>
                                     <span className="chip-val">{modelComparisonResult.models.flan_t5.evaluation?.rouge_scores?.rouge1?.f1 ?? "—"}</span>
-                                  </div>
-                                  <div className="metric-chip" title="ROUGE-2 F1: Bigram phrase fluency">
-                                    <span className="chip-label">ROUGE-2</span>
-                                    <span className="chip-val">{modelComparisonResult.models.flan_t5.evaluation?.rouge_scores?.rouge2?.f1 ?? "—"}</span>
-                                  </div>
-                                  <div className="metric-chip" title="ROUGE-L F1: Longest common sentence structure">
-                                    <span className="chip-label">ROUGE-L</span>
-                                    <span className="chip-val">{modelComparisonResult.models.flan_t5.evaluation?.rouge_scores?.rougeL?.f1 ?? "—"}</span>
                                   </div>
                                   <div className="metric-chip" title="Summary word count">
                                     <span className="chip-label">WORDS</span>
@@ -863,20 +843,8 @@ function App() {
                             {modelComparisonResult.models.bart && (
                               <div className="model-result-card bart-card best-model-card">
                                 <div className="model-card-header">
-                                  <div className="header-meta-row">
-                                    <span className="comparison-arch-pill pill-bart">Autoencoder • 406M</span>
-                                    <div className="header-actions">
-                                      <span className="speed-badge">⏱ {modelComparisonResult.models.bart.latency_seconds}s</span>
-                                      <button
-                                        className="copy-summary-btn"
-                                        onClick={() => handleCopyText(modelComparisonResult.models.bart.summary, "Meta BART summary")}
-                                        title="Copy Meta BART summary"
-                                      >
-                                        📋 Copy
-                                      </button>
-                                    </div>
-                                  </div>
                                   <h4 className="model-card-title">Meta BART</h4>
+                                  <span className="speed-badge">⏱ {modelComparisonResult.models.bart.latency_seconds}s</span>
                                 </div>
 
                                 <div className="model-card-body">
@@ -884,17 +852,9 @@ function App() {
                                 </div>
 
                                 <div className="model-card-metrics">
-                                  <div className="metric-chip" title="ROUGE-1 F1: Unigram overlap with paper">
+                                  <div className="metric-chip" title="ROUGE-1 F1: Unigram lexical overlap">
                                     <span className="chip-label">ROUGE-1</span>
                                     <span className="chip-val highlight-green">{modelComparisonResult.models.bart.evaluation?.rouge_scores?.rouge1?.f1 ?? "—"}</span>
-                                  </div>
-                                  <div className="metric-chip" title="ROUGE-2 F1: Bigram phrase fluency">
-                                    <span className="chip-label">ROUGE-2</span>
-                                    <span className="chip-val highlight-green">{modelComparisonResult.models.bart.evaluation?.rouge_scores?.rouge2?.f1 ?? "—"}</span>
-                                  </div>
-                                  <div className="metric-chip" title="ROUGE-L F1: Longest common sentence structure">
-                                    <span className="chip-label">ROUGE-L</span>
-                                    <span className="chip-val highlight-green">{modelComparisonResult.models.bart.evaluation?.rouge_scores?.rougeL?.f1 ?? "—"}</span>
                                   </div>
                                   <div className="metric-chip" title="Summary word count">
                                     <span className="chip-label">WORDS</span>
@@ -908,20 +868,8 @@ function App() {
                             {modelComparisonResult.models.long_t5 && (
                               <div className="model-result-card longt5-card">
                                 <div className="model-card-header">
-                                  <div className="header-meta-row">
-                                    <span className="comparison-arch-pill pill-longt5">TGlobal • 250M</span>
-                                    <div className="header-actions">
-                                      <span className="speed-badge">⏱ {modelComparisonResult.models.long_t5.latency_seconds}s</span>
-                                      <button
-                                        className="copy-summary-btn"
-                                        onClick={() => handleCopyText(modelComparisonResult.models.long_t5.summary, "LongT5 summary")}
-                                        title="Copy LongT5 summary"
-                                      >
-                                        📋 Copy
-                                      </button>
-                                    </div>
-                                  </div>
                                   <h4 className="model-card-title">Google LongT5</h4>
+                                  <span className="speed-badge">⏱ {modelComparisonResult.models.long_t5.latency_seconds}s</span>
                                 </div>
 
                                 <div className="model-card-body">
@@ -929,17 +877,9 @@ function App() {
                                 </div>
 
                                 <div className="model-card-metrics">
-                                  <div className="metric-chip" title="ROUGE-1 F1: Unigram overlap with paper">
+                                  <div className="metric-chip" title="ROUGE-1 F1: Unigram lexical overlap">
                                     <span className="chip-label">ROUGE-1</span>
                                     <span className="chip-val highlight-blue">{modelComparisonResult.models.long_t5.evaluation?.rouge_scores?.rouge1?.f1 ?? "—"}</span>
-                                  </div>
-                                  <div className="metric-chip" title="ROUGE-2 F1: Bigram phrase fluency">
-                                    <span className="chip-label">ROUGE-2</span>
-                                    <span className="chip-val highlight-blue">{modelComparisonResult.models.long_t5.evaluation?.rouge_scores?.rouge2?.f1 ?? "—"}</span>
-                                  </div>
-                                  <div className="metric-chip" title="ROUGE-L F1: Longest common sentence structure">
-                                    <span className="chip-label">ROUGE-L</span>
-                                    <span className="chip-val highlight-blue">{modelComparisonResult.models.long_t5.evaluation?.rouge_scores?.rougeL?.f1 ?? "—"}</span>
                                   </div>
                                   <div className="metric-chip" title="Summary word count">
                                     <span className="chip-label">WORDS</span>
