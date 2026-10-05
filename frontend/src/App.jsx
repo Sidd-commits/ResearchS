@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [arxivLoading, setArxivLoading] = useState(false);
@@ -57,7 +57,7 @@ function App() {
     setUploadLoading(true);
     setUploadError("");
     try {
-      const response = await fetch("http://localhost:8000/sample-paper");
+      const response = await fetch(`${API_BASE}/sample-paper`);
       if (!response.ok) {
         throw new Error("Could not load sample research paper from server.");
       }
@@ -86,7 +86,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/search-arxiv?query=${encodeURIComponent(searchQuery.trim())}`
+        `${API_BASE}/search-arxiv?query=${encodeURIComponent(searchQuery.trim())}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch research papers from arXiv.");
@@ -108,7 +108,7 @@ function App() {
     showToast(`Importing paper: "${paper.title.slice(0, 32)}..."`);
 
     try {
-      const response = await fetch("http://localhost:8000/import-arxiv-paper", {
+      const response = await fetch(`${API_BASE}/import-arxiv-paper`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -188,7 +188,7 @@ function App() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8000/upload-pdf", {
+      const response = await fetch(`${API_BASE}/upload-pdf`, {
         method: "POST",
         body: formData,
       });
@@ -218,7 +218,7 @@ function App() {
     setSummaryError("");
     try {
       const response = await fetch(
-        `http://localhost:8000/papers/${filename}/compare?max_length=160&min_length=40`,
+        `${API_BASE}/papers/${filename}/compare?max_length=160&min_length=40`,
         { method: "POST" }
       );
 
@@ -243,7 +243,7 @@ function App() {
     setSingleSummaryError("");
     try {
       const response = await fetch(
-        `http://localhost:8000/papers/${filename}/summarize?model_type=${modelType}&max_length=160&min_length=40`,
+        `${API_BASE}/papers/${filename}/summarize?model_type=${modelType}&max_length=160&min_length=40`,
         { method: "POST" }
       );
 
@@ -356,7 +356,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/papers/${encodeURIComponent(paper.saved_filename)}/chat`,
+        `${API_BASE}/papers/${encodeURIComponent(paper.saved_filename)}/chat`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
