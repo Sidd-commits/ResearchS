@@ -31,13 +31,13 @@ class BartSummarizer:
         if self._is_loaded:
             return
 
-        import torch
-        from transformers import BartForConditionalGeneration, BartTokenizer
-
-        logger.info(f"Loading BART model weights: {self.model_name}...")
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
         try:
+            import torch
+            from transformers import BartForConditionalGeneration, BartTokenizer
+
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            logger.info(f"Loading BART model weights: {self.model_name}...")
+
             self.tokenizer = BartTokenizer.from_pretrained(self.model_name)
             torch_dtype = torch.float16 if self.device == "cuda" else torch.float32
             self.model = BartForConditionalGeneration.from_pretrained(

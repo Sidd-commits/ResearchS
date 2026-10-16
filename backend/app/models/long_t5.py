@@ -30,23 +30,23 @@ class LongT5Summarizer:
         if self._is_loaded:
             return
 
-        import torch
-        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-
-        logger.info(f"Loading LongT5 model weights: {self.model_name}...")
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        # LongT5 checkpoint from Google was released with pytorch_model.bin.
-        # Bypass transformers torch.load version restriction (CVE-2025-32434) for trusted weights:
         try:
-            import transformers.modeling_utils as hf_modeling
-            import transformers.utils.import_utils as hf_utils
-            hf_modeling.check_torch_load_is_safe = lambda: None
-            hf_utils.check_torch_load_is_safe = lambda: None
-        except Exception:
-            pass
+            import torch
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-        try:
+            logger.info(f"Loading LongT5 model weights: {self.model_name}...")
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            # LongT5 checkpoint from Google was released with pytorch_model.bin.
+            # Bypass transformers torch.load version restriction (CVE-2025-32434) for trusted weights:
+            try:
+                import transformers.modeling_utils as hf_modeling
+                import transformers.utils.import_utils as hf_utils
+                hf_modeling.check_torch_load_is_safe = lambda: None
+                hf_utils.check_torch_load_is_safe = lambda: None
+            except Exception:
+                pass
+
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             torch_dtype = torch.float16 if self.device == "cuda" else torch.float32
             self.model = AutoModelForSeq2SeqLM.from_pretrained(
