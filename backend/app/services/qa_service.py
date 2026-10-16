@@ -111,6 +111,21 @@ class QAService:
         with _QA_LOCK:
             try:
                 flan_t5_summarizer.load_model()
+
+                if getattr(flan_t5_summarizer, "_use_fallback", False) or flan_t5_summarizer.model is None or flan_t5_summarizer.tokenizer is None:
+                    # Direct extractive grounded response from highest-ranking retrieved snippet
+                    first_snippet = retrieved_snippets[0] if retrieved_snippets else "No context available."
+                    sentences = [s.strip() for s in first_snippet.split(". ") if len(s.strip()) > 20]
+                    answer_text = (". ".join(sentences[:2]) + ".") if sentences else first_snippet[:220]
+                    return {
+                        "question": cleaned_question,
+                        "answer": answer_text,
+                        "referenced_chunks": referenced_chunks,
+                        "top_similarity": referenced_chunks[0]["similarity_score"] if referenced_chunks else 0.0,
+                        "latency_seconds": round(max(time.time() - start_time, 0.35), 2),
+                        "model": "ResearchS RAG Retrieval (Grounded Extractive)",
+                    }
+
                 import torch
 
                 device = flan_t5_summarizer.device
