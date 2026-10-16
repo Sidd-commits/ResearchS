@@ -1,150 +1,173 @@
-# ResearchS ✦ AI-Powered Research Assistant
+# ResearchS ✦ AI-Powered Academic Research Assistant
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?style=flat-square&logo=react)](https://vitejs.dev)
 [![Hugging Face](https://img.shields.io/badge/Models-Hugging%20Face%20Transformers-FFD21E?style=flat-square&logo=huggingface)](https://huggingface.co)
-[![PyTorch CUDA](https://img.shields.io/badge/Acceleration-PyTorch%20CUDA%2012.1-EE4C2C?style=flat-square&logo=pytorch)](https://pytorch.org)
-[![License](https://img.shields.io/badge/License-Academic-blue?style=flat-square)](docs/SHOWCASE_AND_VIVA_GUIDE.md)
+[![PyTorch CUDA](https://img.shields.io/badge/Acceleration-PyTorch%20CUDA-EE4C2C?style=flat-square&logo=pytorch)](https://pytorch.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-**ResearchS** is an end-to-end NLP research paper analysis, summarization, and comparative evaluation system. It allows researchers and students to search peer-reviewed papers on **arXiv**, upload academic PDFs, preprocess and clean scientific discourse, run abstractive inference across pretrained transformer models, and benchmark results using standardized **ROUGE** metrics.
+**ResearchS** is an end-to-end NLP research platform designed for scientific literature analysis, abstractive summarization, comparative model evaluation, and grounded question answering. Researchers and students can discover peer-reviewed papers on **arXiv**, upload academic PDFs, clean and normalize complex academic discourse, run multi-model transformer inference, and benchmark results against standard **ROUGE** metrics.
 
 ---
 
+## 🌟 Key Capabilities
 
-## 🌟 Key Features
-
-* **Real-Time arXiv Search**: Query arXiv directly by keyword or paper title; preview metadata and seamlessly import full academic papers for analysis.
-* **PDF Ingestion & Validation**: Secure PDF upload with UUID sanitization and file integrity validation via FastAPI.
+* **Direct arXiv Integration**: Search arXiv in real time by keywords, paper title, or author; inspect metadata abstracts and import papers directly into the analytical workspace.
+* **Robust PDF Ingestion & Validation**: Secure PDF upload pipeline featuring UUID filename hashing, MIME type verification, and document corruption handling.
 * **Academic NLP Preprocessing**:
-  * Primary extraction via C-optimized **PyMuPDF** (`pymupdf`) with **PyPDF** fallback.
-  * Regex ligature and hyphenation repair (`trans-\nformer` $\rightarrow$ `transformer`).
-  * Citation bracket stripping (`[1]`, `[2, 3]`) and header/footer normalization.
-  * Sentence-aware sliding-window chunking (`[.!?]\s+`) with configurable overlap.
-* **Pretrained Transformer Inference**:
-  * **Google FLAN-T5** (`google/flan-t5-base`, 250M parameters) — Instruction Seq2Seq.
-  * **Meta BART** (`facebook/bart-large-cnn`, 406M parameters) — Denoising Autoencoder Seq2Seq.
-  * **Google LongT5** (`google/long-t5-tglobal-base`, 250M parameters) — Transient Global long-context (4096 tokens).
-* **Interactive PDF Research Chatbot (Step 26 & Features 9/10)**:
-  * Context-aware Question Answering grounded in academic sentence chunks.
-  * Fast TF-IDF chunk retrieval + zero-shot generation using Google FLAN-T5.
-  * Displays cited chunks, similarity confidence scores, and preview snippets.
-* **Empirical Benchmarking & Scoring**:
-  * Unigram overlap (**ROUGE-1 F1**).
-  * Bigram phrasing fluency (**ROUGE-2 F1**).
+  * High-throughput extraction via C-optimized **PyMuPDF** (`fitz`) with fallback to **PyPDF**.
+  * De-hyphenation across line breaks (e.g. `trans-\nformer` $\rightarrow$ `transformer`) and Unicode ligature repair.
+  * In-text citation bracket removal (`[1]`, `[2, 3]`) and header/footer normalization.
+  * Sentence-boundary sliding window chunking (`[.!?]\s+`) with configurable overlap for semantic continuity.
+* **Comparative Transformer Inference**:
+  * **Google FLAN-T5** (`google/flan-t5-base`, 250M parameters) — Instruction-tuned Seq2Seq for structured factual extraction.
+  * **Meta BART** (`facebook/bart-large-cnn`, 406M parameters) — Denoising autoencoder Seq2Seq for fluid, narrative summaries.
+  * **Google LongT5** (`google/long-t5-tglobal-base`, 250M parameters) — Transient Global Attention scaling input context to 4,096 tokens.
+* **Interactive Research Q&A Chatbot (RAG)**:
+  * Retrieval-Augmented Generation grounded in extracted paper chunks.
+  * TF-IDF sparse similarity scoring paired with zero-shot answer generation using Google FLAN-T5.
+  * Transparent citation tracking displaying retrieved chunk snippets and similarity confidence scores.
+* **Standardized Evaluation & Benchmarking**:
+  * Unigram informativeness (**ROUGE-1 F1**).
+  * Bigram syntactic fluency (**ROUGE-2 F1**).
   * Longest Common Subsequence structure (**ROUGE-L F1**).
-  * Inference latency in seconds and generation tokens/sec.
-* **Serialized Model Checkpoint (Rubric Criterion 14)**:
-  * Automatically serializes the winning model architecture, parameters, and benchmark scores to `backend/best_model.pkl`.
-* **Hardware-Safe Lifecycle**:
-  * Sequential model execution with explicit VRAM purging (`torch.cuda.empty_cache()` and `gc.collect()`), maintaining peak GPU memory strictly under **1.6 GB** (tested on NVIDIA RTX 2050 4GB).
+  * Inference latency tracking (elapsed seconds and tokens per second).
+* **Automated Best Model Serialization**:
+  * Selects the best performing model based on composite ROUGE metrics and serializes configuration metadata to `backend/best_model.pkl`.
+* **Hardware-Conscious Memory Lifecycle**:
+  * Sequential model loading and immediate memory purge (`torch.cuda.empty_cache()` and `gc.collect()`) maintaining peak VRAM under 1.6 GB.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Architecture & Data Flow
 
 ```text
 React Frontend (Vite)
-       ↓  (HTTP REST / JSON / Multipart)
-FastAPI Backend
-       ↓
-Preprocessing Engine (PyMuPDF: extract → clean citations → sentence chunking)
-       ↓
-Hugging Face Transformers (Sequential CUDA execution: FLAN-T5 & BART)
-       ↓
-Evaluation Engine (ROUGE-1, ROUGE-2, ROUGE-L, Latency Benchmarking)
-       ↓
-Persistence (best_model.pkl checkpoint artifact) & Interactive Dashboard
+       │  (HTTP REST / JSON / Multipart)
+       ▼
+FastAPI Backend Gateway
+       │
+       ├─► Preprocessing Engine (PyMuPDF: text extraction → noise cleaning → sentence chunking)
+       │
+       ├─► Model Inference Engine (Sequential CUDA execution: FLAN-T5, BART, LongT5)
+       │
+       ├─► Evaluation Engine (ROUGE-1, ROUGE-2, ROUGE-L & Latency Benchmarks)
+       │
+       └─► RAG Q&A Engine (TF-IDF retrieval + FLAN-T5 generation with citation grounding)
 ```
-
-Detailed technical specifications and hardware safety constraints are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
-## 📂 Project Structure
+## 📂 Project Directory Structure
 
 ```text
 ResearchS/
 ├── backend/
 │   ├── app/
 │   │   ├── evaluation/
-│   │   │   └── model_evaluator.py     # ROUGE-1/2/L scoring & .pkl serialization
+│   │   │   ├── __init__.py
+│   │   │   └── model_evaluator.py     # ROUGE metric calculation & model selection
 │   │   ├── models/
-│   │   │   ├── bart.py                # Meta BART wrapper (facebook/bart-large-cnn)
-│   │   │   ├── flan_t5.py             # Google FLAN-T5 wrapper (google/flan-t5-base)
-│   │   │   └── long_t5.py             # Google LongT5 wrapper (google/long-t5-tglobal-base)
+│   │   │   ├── __init__.py
+│   │   │   ├── bart.py                # Meta BART (facebook/bart-large-cnn)
+│   │   │   ├── flan_t5.py             # Google FLAN-T5 (google/flan-t5-base)
+│   │   │   └── long_t5.py             # Google LongT5 (google/long-t5-tglobal-base)
 │   │   ├── services/
-│   │   │   ├── pdf_service.py         # PyMuPDF extraction, cleaning, chunking
-│   │   │   ├── qa_service.py          # TF-IDF RAG & FLAN-T5 Paper Chatbot
-│   │   │   └── summarization_service.py # Comparative pipeline orchestrator
-│   │   └── main.py                    # FastAPI routes, arXiv integration, Chatbot Q&A
-│   ├── uploads/                       # PDF uploads (gitignored for privacy)
-│   ├── best_model.pkl                 # Serialized winning model checkpoint artifact
+│   │   │   ├── __init__.py
+│   │   │   ├── pdf_service.py         # PyMuPDF extraction, cleaning, and chunking
+│   │   │   ├── qa_service.py          # TF-IDF RAG retrieval & FLAN-T5 Chatbot
+│   │   │   └── summarization_service.py # Multi-model pipeline orchestration
+│   │   └── main.py                    # FastAPI entrypoint, routes, and CORS setup
+│   ├── uploads/                       # Ephemeral upload storage (.gitkeep tracked)
+│   ├── best_model.pkl                 # Winning model checkpoint metadata
 │   └── requirements.txt               # Pinned Python dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx                    # Interactive dashboard component
-│   │   ├── index.css                  # Responsive design system
-│   │   └── main.jsx                   # React root entry
+│   │   ├── App.jsx                    # Core reactive dashboard component
+│   │   ├── index.css                  # Minimalist responsive design system
+│   │   └── main.jsx                   # React application root
 │   ├── index.html
 │   ├── package.json
 │   └── vite.config.js
-├── docs/
-│   ├── ARCHITECTURE.md                # System design & memory safety specifications
-│   ├── SHOWCASE_AND_VIVA_GUIDE.md     # 14-point academic rubric & viva answers
-│   └── PROJECT_CONTEXT.md             # Project roadmap and historical milestones
-├── .gitignore                         # Strict leak-prevention rules (uploads, .env, venv)
+├── render.yaml                        # Render Blueprint deployment specification
+├── .gitignore                         # Security & leak-prevention rules
+├── LICENSE                            # MIT License
 └── README.md                          # Repository documentation
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quickstart Guide
 
-### 1. Backend Setup (FastAPI & PyTorch)
+### Prerequisites
+* **Python**: 3.10 or 3.11
+* **Node.js**: 18+ and npm
+* *(Optional)* NVIDIA GPU with CUDA for accelerated model inference
+
+### 1. Backend Setup
 
 ```bash
+# Navigate to the backend directory
 cd backend
+
+# Create and activate virtual environment
 python -m venv venv
 
 # Windows
 .\venv\Scripts\activate
-# Linux / macOS
+# macOS / Linux
 source venv/bin/activate
 
+# Install dependencies
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload --port 8000
+
+# Start the development server
+uvicorn app.main:app --reload --port 8000
 ```
 
-* API server: `http://127.0.0.1:8000`
-* Interactive OpenAPI Docs: `http://127.0.0.1:8000/docs`
+* API Server: `http://localhost:8000`
+* Interactive Documentation (Swagger UI): `http://localhost:8000/docs`
 
-### 2. Frontend Setup (React & Vite)
+### 2. Frontend Setup
 
 ```bash
+# Navigate to the frontend directory
 cd frontend
+
+# Install dependencies
 npm install
+
+# Start Vite development server
 npm run dev
 ```
 
-* User interface: `http://localhost:5173`
+* Web Dashboard: `http://localhost:5173`
 
 ---
 
-## 📖 Documentation & Evaluation
+## ☁️ Deployment (Render)
 
-* **[SHOWCASE_AND_VIVA_GUIDE.md](docs/SHOWCASE_AND_VIVA_GUIDE.md)**: Comprehensive answers to all 14 viva questions, base paper comparison, ROUGE metric definitions, and Hugging Face verification details.
-* **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Hardware constraints, sequential GPU memory unloading, and pipeline specifications.
-* **[PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md)**: Chronological development roadmap and milestone tracking.
+This repository includes a [`render.yaml`](render.yaml) Blueprint configured for dual-service deployment:
+
+1. **Backend Web Service**: Python 3.11 environment running FastAPI via `uvicorn`.
+2. **Frontend Static Site**: Vite client build published to Render's global CDN.
+
+To deploy via Blueprint:
+1. Connect your repository on [Render](https://dashboard.render.com).
+2. Select **New +** $\rightarrow$ **Blueprint**.
+3. Point to this repository; Render will automatically detect and deploy both services.
+4. Set the frontend's `VITE_API_URL` environment variable to your deployed backend URL.
 
 ---
 
 ## 🔒 Security & Privacy
 
-* No API keys, credentials, or personal access tokens are committed or stored in this repository.
-* User-uploaded documents and temporary files in `backend/uploads/` are excluded via `.gitignore`.
-* Virtual environments, local caches, and build artifacts are strictly ignored.
+* **Zero Credentials**: No API keys, passwords, or personal credentials are stored in this repository.
+* **Strict Exclusions**: All uploaded academic documents, local virtual environments, OS caches, and internal preparation artifacts are strictly excluded via `.gitignore`.
+* **Sanitized Filenames**: Uploaded documents are assigned randomized UUIDs to prevent directory traversal or file collisions.
 
 ---
 
-## 👥 Authors
-Developed for the NLP Project Research Showcase.
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

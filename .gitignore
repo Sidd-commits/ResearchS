@@ -54,6 +54,9 @@ backend/uploads/*
 # Logs
 *.log
 
-# Personal Viva & Exam Prep (Private, never committed)
+# Internal Docs & Personal Viva Preparation (Private, never committed)
+docs/
 viva_prep/
 *.zip
+*.docx
+*.pdf
