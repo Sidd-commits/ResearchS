@@ -48,8 +48,21 @@ def root():
 
 @app.get("/health")
 def health_check():
+    import os
+    import sys
+    cgroup_v1 = Path("/sys/fs/cgroup/memory/memory.limit_in_bytes").read_text().strip() if Path("/sys/fs/cgroup/memory/memory.limit_in_bytes").exists() else None
+    cgroup_v2 = Path("/sys/fs/cgroup/memory.max").read_text().strip() if Path("/sys/fs/cgroup/memory.max").exists() else None
+    render_dir = os.path.exists("/opt/render")
+    env_keys = [k for k in os.environ.keys() if any(sub in k for sub in ["RENDER", "PORT", "MEM", "PYTHON", "PATH"])]
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "platform": sys.platform,
+        "render_dir": render_dir,
+        "cgroup_v1": cgroup_v1,
+        "cgroup_v2": cgroup_v2,
+        "env_keys": env_keys,
+        "env_RENDER": os.getenv("RENDER"),
+        "env_PORT": os.getenv("PORT"),
     }
 
 @app.post("/upload-pdf")
