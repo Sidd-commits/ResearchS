@@ -9,11 +9,27 @@ the standard benchmark for fluid, abstractive document summarization.
 
 from __future__ import annotations
 
+import os
+import re
 import logging
 import time
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger("researchs.models.bart")
+
+def is_constrained_environment() -> bool:
+    """Detects if running in a memory-constrained container (e.g. Render 512MB Free Tier)."""
+    if os.getenv("FORCE_HEAVY_MODELS", "").lower() == "true":
+        return False
+    if os.getenv("RENDER") == "true" or os.getenv("RENDER_SERVICE_ID"):
+        return True
+    try:
+        import psutil
+        if (psutil.virtual_memory().total / (1024 ** 3)) < 2.0:
+            return True
+    except Exception:
+        pass
+    return False
 
 
 class BartSummarizer:
@@ -25,10 +41,17 @@ class BartSummarizer:
         self.model = None
         self.device = None
         self._is_loaded = False
+        self._use_fallback = False
 
     def load_model(self) -> None:
         """Loads model and tokenizer to memory (lazy loaded on first request)."""
         if self._is_loaded:
+            return
+
+        if is_constrained_environment():
+            logger.info("Memory-constrained cloud environment detected (Render 512MB). Activating fast semantic summarizer.")
+            self._is_loaded = True
+            self._use_fallback = True
             return
 
         try:

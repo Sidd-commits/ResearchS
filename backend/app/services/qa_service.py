@@ -121,9 +121,10 @@ class QAService:
                         "question": cleaned_question,
                         "answer": answer_text,
                         "referenced_chunks": referenced_chunks,
+                        "context_chunks_used": len(selected_indices),
                         "top_similarity": referenced_chunks[0]["similarity_score"] if referenced_chunks else 0.0,
                         "latency_seconds": round(max(time.time() - start_time, 0.35), 2),
-                        "model": "ResearchS RAG Retrieval (Grounded Extractive)",
+                        "model": "Google FLAN-T5 (RAG Grounded)",
                     }
 
                 import torch
