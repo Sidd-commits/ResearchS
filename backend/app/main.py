@@ -48,23 +48,13 @@ def root():
 
 @app.get("/health")
 def health_check():
-    import os
-    import sys
-    cgroup_v1 = Path("/sys/fs/cgroup/memory/memory.limit_in_bytes").read_text().strip() if Path("/sys/fs/cgroup/memory/memory.limit_in_bytes").exists() else None
-    cgroup_v2 = Path("/sys/fs/cgroup/memory.max").read_text().strip() if Path("/sys/fs/cgroup/memory.max").exists() else None
-    render_dir = os.path.exists("/opt/render")
-    env_keys = [k for k in os.environ.keys() if any(sub in k for sub in ["RENDER", "PORT", "MEM", "PYTHON", "PATH"])]
-    from app.utils.env_utils import is_constrained_environment
+    """
+    Health check endpoint for monitoring, uptime probes, and deployment validation.
+    """
     return {
         "status": "healthy",
-        "platform": sys.platform,
-        "is_constrained": is_constrained_environment(),
-        "render_dir": render_dir,
-        "cgroup_v1": cgroup_v1,
-        "cgroup_v2": cgroup_v2,
-        "env_keys": env_keys,
-        "env_RENDER": os.getenv("RENDER"),
-        "env_PORT": os.getenv("PORT"),
+        "service": "researchs-backend",
+        "version": "1.0.0",
     }
 
 @app.post("/upload-pdf")

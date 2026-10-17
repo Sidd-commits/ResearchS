@@ -77,6 +77,9 @@ ResearchS/
 │   │   │   ├── pdf_service.py         # PyMuPDF extraction, cleaning, and chunking
 │   │   │   ├── qa_service.py          # TF-IDF RAG retrieval & FLAN-T5 Chatbot
 │   │   │   └── summarization_service.py # Multi-model pipeline orchestration
+│   │   ├── utils/
+│   │   │   ├── __init__.py
+│   │   │   └── env_utils.py           # Cloud vs. local environment detection
 │   │   └── main.py                    # FastAPI entrypoint, routes, and CORS setup
 │   ├── uploads/                       # Ephemeral upload storage (.gitkeep tracked)
 │   ├── best_model.pkl                 # Winning model checkpoint metadata
