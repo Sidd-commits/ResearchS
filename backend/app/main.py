@@ -54,9 +54,11 @@ def health_check():
     cgroup_v2 = Path("/sys/fs/cgroup/memory.max").read_text().strip() if Path("/sys/fs/cgroup/memory.max").exists() else None
     render_dir = os.path.exists("/opt/render")
     env_keys = [k for k in os.environ.keys() if any(sub in k for sub in ["RENDER", "PORT", "MEM", "PYTHON", "PATH"])]
+    from app.utils.env_utils import is_constrained_environment
     return {
         "status": "healthy",
         "platform": sys.platform,
+        "is_constrained": is_constrained_environment(),
         "render_dir": render_dir,
         "cgroup_v1": cgroup_v1,
         "cgroup_v2": cgroup_v2,

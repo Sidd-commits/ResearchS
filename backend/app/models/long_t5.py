@@ -16,19 +16,7 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger("researchs.models.long_t5")
 
-def is_constrained_environment() -> bool:
-    """Detects if running in a memory-constrained container (e.g. Render 512MB Free Tier)."""
-    if os.getenv("FORCE_HEAVY_MODELS", "").lower() == "true":
-        return False
-    if os.getenv("RENDER") == "true" or os.getenv("RENDER_SERVICE_ID"):
-        return True
-    try:
-        import psutil
-        if (psutil.virtual_memory().total / (1024 ** 3)) < 2.0:
-            return True
-    except Exception:
-        pass
-    return False
+from app.utils.env_utils import is_constrained_environment
 
 
 class LongT5Summarizer:
