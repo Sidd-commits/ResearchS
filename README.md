@@ -1,67 +1,123 @@
 # ResearchS ✦ AI-Powered Academic Research Assistant
 
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?style=flat-square&logo=react)](https://vitejs.dev)
-[![Hugging Face](https://img.shields.io/badge/Models-Hugging%20Face%20Transformers-FFD21E?style=flat-square&logo=huggingface)](https://huggingface.co)
-[![PyTorch CUDA](https://img.shields.io/badge/Acceleration-PyTorch%20CUDA-EE4C2C?style=flat-square&logo=pytorch)](https://pytorch.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Live App](https://img.shields.io/badge/Live%20App-Render%20Cloud-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://researchs-frontend.onrender.com)
+[![API Docs](https://img.shields.io/badge/API%20Docs-Swagger%20UI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://researchs-backend.onrender.com/docs)
+[![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://researchs-frontend.onrender.com)
+[![Models](https://img.shields.io/badge/Models-Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**ResearchS** is an end-to-end NLP research platform designed for scientific literature analysis, abstractive summarization, comparative model evaluation, and grounded question answering. Researchers and students can discover peer-reviewed papers on **arXiv**, upload academic PDFs, clean and normalize complex academic discourse, run multi-model transformer inference, and benchmark results against standard **ROUGE** metrics.
+> **ResearchS** is an end-to-end, full-stack NLP research platform for scientific paper discovery, automated abstractive summarization, multi-model transformer benchmarking, and citation-grounded conversational question answering (RAG).
+
+---
+
+## 🌐 Live Cloud Deployment
+
+The application is deployed and actively running on **Render Cloud Infrastructure**:
+
+| Component | Status | Live URL | Description |
+| :--- | :---: | :--- | :--- |
+| **Frontend Web App** | ![Active](https://img.shields.io/badge/Status-Online-brightgreen?style=flat-square) | **[researchs-frontend.onrender.com](https://researchs-frontend.onrender.com)** | Responsive React 19 + Vite research workspace |
+| **Backend REST API** | ![Active](https://img.shields.io/badge/Status-Online-brightgreen?style=flat-square) | **[researchs-backend.onrender.com](https://researchs-backend.onrender.com)** | High-throughput FastAPI engine |
+| **Interactive API Docs** | ![Active](https://img.shields.io/badge/Swagger-Interactive-blue?style=flat-square) | **[researchs-backend.onrender.com/docs](https://researchs-backend.onrender.com/docs)** | OpenAPI / Swagger interactive documentation |
+| **Health Monitoring** | ![Healthy](https://img.shields.io/badge/Health-200%20OK-success?style=flat-square) | **[researchs-backend.onrender.com/health](https://researchs-backend.onrender.com/health)** | Uptime probe and container lifecycle check |
 
 ---
 
 ## 🌟 Key Capabilities
 
-* **Direct arXiv Integration**: Search arXiv in real time by keywords, paper title, or author; inspect metadata abstracts and import papers directly into the analytical workspace.
-* **Robust PDF Ingestion & Validation**: Secure PDF upload pipeline featuring UUID filename hashing, MIME type verification, and document corruption handling.
-* **Academic NLP Preprocessing**:
-  * High-throughput extraction via C-optimized **PyMuPDF** (`fitz`) with fallback to **PyPDF**.
-  * De-hyphenation across line breaks (e.g. `trans-\nformer` $\rightarrow$ `transformer`) and Unicode ligature repair.
+* **Real-Time arXiv Search & Instant Paper Ingestion**:
+  * Direct querying against arXiv API (`export.arxiv.org`) with automated title, abstract, and author parsing.
+  * Resilient fallback cache providing instant access to foundational AI papers (*Attention Is All You Need*, *BART*, *BERT*, *LongT5*).
+  * One-click ingestion that compiles paper metadata into structured academic PDFs.
+* **Academic PDF Extraction & Cleaning Pipeline**:
+  * High-throughput text extraction powered by C-optimized **PyMuPDF** (`fitz`) with fallback to **PyPDF**.
+  * De-hyphenation across line breaks (e.g., `trans-\nformer` $\rightarrow$ `transformer`) and Unicode ligature repair (`fi`, `fl`).
   * In-text citation bracket removal (`[1]`, `[2, 3]`) and header/footer normalization.
-  * Sentence-boundary sliding window chunking (`[.!?]\s+`) with configurable overlap for semantic continuity.
-* **Comparative Transformer Inference**:
-  * **Google FLAN-T5** (`google/flan-t5-base`, 250M parameters) — Instruction-tuned Seq2Seq for structured factual extraction.
-  * **Meta BART** (`facebook/bart-large-cnn`, 406M parameters) — Denoising autoencoder Seq2Seq for fluid, narrative summaries.
-  * **Google LongT5** (`google/long-t5-tglobal-base`, 250M parameters) — Transient Global Attention scaling input context to 4,096 tokens.
-* **Interactive Research Q&A Chatbot (RAG)**:
-  * Retrieval-Augmented Generation grounded in extracted paper chunks.
-  * TF-IDF sparse similarity scoring paired with zero-shot answer generation using Google FLAN-T5.
-  * Transparent citation tracking displaying retrieved chunk snippets and similarity confidence scores.
-* **Standardized Evaluation & Benchmarking**:
-  * Unigram informativeness (**ROUGE-1 F1**).
-  * Bigram syntactic fluency (**ROUGE-2 F1**).
-  * Longest Common Subsequence structure (**ROUGE-L F1**).
-  * Inference latency tracking (elapsed seconds and tokens per second).
-* **Automated Best Model Serialization**:
-  * Selects the best performing model based on composite ROUGE metrics and serializes configuration metadata to `backend/best_model.pkl`.
-* **Hardware-Conscious Memory Lifecycle**:
-  * Sequential model loading and immediate memory purge (`torch.cuda.empty_cache()` and `gc.collect()`) maintaining peak VRAM under 1.6 GB.
+  * Sentence-boundary sliding window chunking (`[.!?]\s+`) with configurable token overlap for contextual continuity.
+* **Multi-Model Transformer Inference**:
+  * **Google FLAN-T5** (`google/flan-t5-base`, ~250M params) — Instruction-tuned Seq2Seq model optimized for factual, concise synthesis.
+  * **Meta BART** (`facebook/bart-large-cnn`, ~406M params) — Denoising autoencoder Seq2Seq model producing fluid, coherent narratives.
+  * **Google LongT5** (`google/long-t5-tglobal-base`, ~250M params) — Transient Global Attention scaling input context to 4,096 tokens for long-document modeling.
+* **Comparative Evaluation & Benchmark Matrix**:
+  * Automated side-by-side model comparison on the exact same research paper.
+  * Evaluated on unigram recall (**ROUGE-1 F1**), bigram fluency (**ROUGE-2 F1**), and longest common subsequence (**ROUGE-L F1**).
+  * Latency tracking (execution seconds and tokens per second).
+  * Automated model selection and artifact serialization (`backend/best_model.pkl`).
+* **Citation-Grounded RAG Chatbot**:
+  * Context-aware Question Answering over uploaded paper chunks.
+  * TF-IDF sparse similarity scoring paired with zero-shot synthesis via Google FLAN-T5.
+  * Transparent citation tracking showing retrieved chunk snippets, chunk indices, and similarity confidence scores.
+* **Dual-Environment Architecture (Cloud vs. Localhost)**:
+  * Automatically detects constrained cloud environments (Render Free Tier 512MB RAM ceiling) to eliminate Out-Of-Memory (OOM) SIGKILL failures.
+  * Executes full PyTorch CUDA GPU inference when run locally with sufficient hardware.
 
 ---
 
 ## 🏗️ Architecture & Data Flow
 
 ```text
-React Frontend (Vite)
-       │  (HTTP REST / JSON / Multipart)
-       ▼
-FastAPI Backend Gateway
-       │
-       ├─► Preprocessing Engine (PyMuPDF: text extraction → noise cleaning → sentence chunking)
-       │
-       ├─► Model Inference Engine (Sequential CUDA execution: FLAN-T5, BART, LongT5)
-       │
-       ├─► Evaluation Engine (ROUGE-1, ROUGE-2, ROUGE-L & Latency Benchmarks)
-       │
-       └─► RAG Q&A Engine (TF-IDF retrieval + FLAN-T5 generation with citation grounding)
+                     ┌──────────────────────────────────────────────┐
+                     │          React 19 Frontend (Vite)            │
+                     │    https://researchs-frontend.onrender.com   │
+                     └──────────────────────┬───────────────────────┘
+                                            │ HTTP / JSON / Multipart
+                                            ▼
+                     ┌──────────────────────────────────────────────┐
+                     │          FastAPI Backend Gateway             │
+                     │    https://researchs-backend.onrender.com    │
+                     └──────┬───────────────┬────────────────┬──────┘
+                            │               │                │
+            ┌───────────────┴────┐   ┌──────┴─────────┐   ┌──┴──────────────────┐
+            │ Preprocessing      │   │ Model Hub      │   │ RAG Engine          │
+            ├────────────────────┤   ├────────────────┤   ├─────────────────────┤
+            │ • PyMuPDF / fitz   │   │ • FLAN-T5 Base │   │ • TF-IDF Vectorizer │
+            │ • Ligature Repair  │   │ • BART Large   │   │ • Cosine Similarity │
+            │ • De-hyphenation   │   │ • LongT5       │   │ • Grounded Q&A      │
+            │ • Sentence Chunks  │   │ • ROUGE-1/2/L  │   │ • Chunk Citations   │
+            └────────────────────┘   └────────────────┘   └─────────────────────┘
 ```
 
 ---
 
-## 📂 Project Directory Structure
+## 📡 Live API Endpoints Reference
+
+All endpoints are live and accessible via HTTPS:
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Service health status and uptime probe |
+| `GET` | `/sample-paper` | Generates / loads benchmark sample research paper |
+| `GET` | `/search-arxiv?query={term}` | Searches arXiv academic repository |
+| `POST` | `/import-arxiv-paper` | Imports an arXiv paper, generates PDF, and preprocesses text |
+| `POST` | `/upload-pdf` | Uploads an academic PDF, extracts, cleans, and chunks text |
+| `POST` | `/papers/{filename}/summarize` | Generates summary using specified model (`flan-t5`, `bart`, `long-t5`) |
+| `POST` | `/papers/{filename}/compare` | Runs 3-model benchmark comparison and saves `best_model.pkl` |
+| `POST` | `/papers/{filename}/chat` | RAG Q&A chatbot query grounded in paper context |
+| `GET` | `/best-model` | Retrieves serialized winning model benchmark metadata |
+
+### Quick Example: Querying the Live API with curl
+
+```bash
+# 1. Check Backend Health
+curl -s https://researchs-backend.onrender.com/health
+
+# 2. Search arXiv for Research Papers
+curl -s "https://researchs-backend.onrender.com/search-arxiv?query=attention"
+
+# 3. Load Sample Research Paper
+curl -s https://researchs-backend.onrender.com/sample-paper
+```
+
+---
+
+## 📂 Repository Structure
 
 ```text
 ResearchS/
+├── .gitignore                         # Strict exclusion rules (no keys, docs, or PDFs)
+├── LICENSE                            # MIT License
+├── README.md                          # Main repository documentation & live links
+├── render.yaml                        # Infrastructure-as-Code Blueprint for Render
 ├── backend/
 │   ├── app/
 │   │   ├── evaluation/
@@ -81,26 +137,33 @@ ResearchS/
 │   │   │   ├── __init__.py
 │   │   │   └── env_utils.py           # Cloud vs. local environment detection
 │   │   └── main.py                    # FastAPI entrypoint, routes, and CORS setup
-│   ├── uploads/                       # Ephemeral upload storage (.gitkeep tracked)
+│   ├── uploads/
+│   │   └── .gitkeep                   # Tracks folder structure without committing PDFs
 │   ├── best_model.pkl                 # Winning model checkpoint metadata
-│   └── requirements.txt               # Pinned Python dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx                    # Core reactive dashboard component
-│   │   ├── index.css                  # Minimalist responsive design system
-│   │   └── main.jsx                   # React application root
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
-├── render.yaml                        # Render Blueprint deployment specification
-├── .gitignore                         # Security & leak-prevention rules
-├── LICENSE                            # MIT License
-└── README.md                          # Repository documentation
+│   ├── requirements.txt               # Pinned Python dependencies
+│   └── README.md                      # Backend service documentation
+└── frontend/
+    ├── public/
+    │   ├── favicon.svg                # Brand icon
+    │   └── icons.svg
+    ├── src/
+    │   ├── App.jsx                    # Reactive research dashboard component
+    │   ├── index.css                  # Responsive minimalist design system
+    │   └── main.jsx                   # React root mount
+    ├── .gitignore
+    ├── eslint.config.js
+    ├── index.html                     # Page metadata & title
+    ├── package.json                   # Dependencies and build scripts
+    ├── package-lock.json
+    ├── vite.config.js
+    └── README.md                      # Frontend documentation
 ```
 
 ---
 
-## 🚀 Quickstart Guide
+## 🚀 Local Development Setup
+
+To run ResearchS on your local workstation with full GPU hardware acceleration:
 
 ### Prerequisites
 * **Python**: 3.10 or 3.11
@@ -129,7 +192,7 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 * API Server: `http://localhost:8000`
-* Interactive Documentation (Swagger UI): `http://localhost:8000/docs`
+* Interactive Documentation: `http://localhost:8000/docs`
 
 ### 2. Frontend Setup
 
@@ -148,25 +211,28 @@ npm run dev
 
 ---
 
-## ☁️ Deployment (Render)
+## ☁️ Deployment on Render
 
-This repository includes a [`render.yaml`](render.yaml) Blueprint configured for dual-service deployment:
+This repository includes a [`render.yaml`](render.yaml) Blueprint configured for zero-downtime continuous deployment:
 
-1. **Backend Web Service**: Python 3.11 environment running FastAPI via `uvicorn`.
-2. **Frontend Static Site**: Vite client build published to Render's global CDN.
+1. **Backend Web Service (`researchs-backend`)**:
+   * Runtime: Python 3.11
+   * Build: `pip install -r requirements.txt` (using optimized CPU PyTorch wheels)
+   * Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   * Automatic continuous deployment on push to `main` branch.
 
-To deploy via Blueprint:
-1. Connect your repository on [Render](https://dashboard.render.com).
-2. Select **New +** $\rightarrow$ **Blueprint**.
-3. Point to this repository; Render will automatically detect and deploy both services.
-4. Set the frontend's `VITE_API_URL` environment variable to your deployed backend URL.
+2. **Frontend Static Site (`researchs-frontend`)**:
+   * Runtime: Static Site
+   * Build: `npm ci && npm run build`
+   * Publish Path: `dist`
+   * Automatic rewrite rules routing to `/index.html`.
 
 ---
 
 ## 🔒 Security & Privacy
 
 * **Zero Credentials**: No API keys, passwords, or personal credentials are stored in this repository.
-* **Strict Exclusions**: All uploaded academic documents, local virtual environments, OS caches, and internal preparation artifacts are strictly excluded via `.gitignore`.
+* **Strict Exclusions**: All uploaded academic documents, local virtual environments, OS caches, and internal artifacts are excluded via `.gitignore`.
 * **Sanitized Filenames**: Uploaded documents are assigned randomized UUIDs to prevent directory traversal or file collisions.
 
 ---

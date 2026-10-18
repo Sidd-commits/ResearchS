@@ -1,16 +1,89 @@
-# React + Vite
+# ResearchS ✦ Frontend Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Live App](https://img.shields.io/badge/Live%20Frontend-Render%20Cloud-46E3B7?style=flat-square&logo=render&logoColor=white)](https://researchs-frontend.onrender.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Bundler-Vite%208-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
 
-Currently, two official plugins are available:
+The frontend client for **ResearchS**, an AI-powered academic paper assistant. Built with React 19 and Vite, providing a fast, responsive, and intuitive interface for researchers to discover papers, generate abstractive summaries, compare transformer models, and interact via an academic RAG chatbot.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🌐 Live Web Demo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* **Production URL**: [https://researchs-frontend.onrender.com](https://researchs-frontend.onrender.com)
+* **Backend API**: [https://researchs-backend.onrender.com](https://researchs-backend.onrender.com)
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🌟 Key Features
+
+* **Real-time arXiv Search**: Query arXiv papers with live abstract previews and one-click import into the analysis pipeline.
+* **Paper Ingestion**: Drag-and-drop PDF upload or instant loading of the pre-processed benchmark paper.
+* **Pre-processing Inspection**: View extracted text metrics, de-hyphenated word counts, chunk boundaries, and citation cleanup in real time.
+* **Dual Inference Modes**:
+  * **Single Model Summary**: Switch between Google FLAN-T5, Meta BART, and Google LongT5 with custom summary length sliders.
+  * **3-Model Comparison**: Side-by-side comparative benchmarking displaying ROUGE-1, ROUGE-2, and ROUGE-L scores with latency metrics.
+* **Interactive PDF Chatbot (RAG)**: Ask contextual questions about any uploaded paper. Answers are retrieved via TF-IDF chunk ranking and displayed with citation confidence badges.
+
+---
+
+## 🛠️ Technology Stack
+
+* **Framework**: React 19
+* **Build Tool**: Vite 8
+* **Styling**: Modern Vanilla CSS with CSS custom properties (design tokens, smooth gradients, responsive layout)
+* **Icons**: Inline SVG icons optimized for performance
+
+---
+
+## ⚙️ Environment Configuration
+
+The application communicates with the backend via the `VITE_API_URL` environment variable.
+
+| Variable | Default (Local) | Production (Render) |
+| :--- | :--- | :--- |
+| `VITE_API_URL` | `http://localhost:8000` | `https://researchs-backend.onrender.com` |
+
+To override locally, create a `.env` file in this directory:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+---
+
+## 🚀 Getting Started
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Run Local Development Server
+
+```bash
+npm run dev
+```
+
+Opens at `http://localhost:5173`.
+
+### Production Build
+
+```bash
+npm run build
+```
+
+Builds the optimized production bundle to the `dist/` directory.
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](../LICENSE).
