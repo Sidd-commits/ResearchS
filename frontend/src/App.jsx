@@ -29,9 +29,10 @@ function App() {
   const [modelComparisonResult, setModelComparisonResult] = useState(null);
   const [summaryError, setSummaryError] = useState("");
 
-  // Chatbot Q&A state (Step 26)
+  // Chatbot Q&A state
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
+  const messageIdRef = useRef(1);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState("");
 
@@ -344,7 +345,7 @@ function App() {
     }
 
     const userMsg = {
-      id: Date.now(),
+      id: messageIdRef.current++,
       role: "user",
       text: query,
     };
@@ -371,7 +372,7 @@ function App() {
 
       const data = await response.json();
       const assistantMsg = {
-        id: Date.now() + 1,
+        id: messageIdRef.current++,
         role: "assistant",
         text: data.answer || "No direct answer was generated from the paper context.",
         referenced_chunks: data.referenced_chunks || [],

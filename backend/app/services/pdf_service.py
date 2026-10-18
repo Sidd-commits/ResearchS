@@ -39,7 +39,7 @@ class PDFService:
         self.default_overlap_chars = default_overlap_chars
 
     # =========================================================================
-    # STEP 17: PDF TEXT EXTRACTION
+    # SECTION 1: PDF TEXT EXTRACTION
     # =========================================================================
 
     def extract_text(self, pdf_path: str | Path) -> Dict[str, Any]:
@@ -131,7 +131,7 @@ class PDFService:
         }
 
     # =========================================================================
-    # STEP 18 (Part A): TEXT CLEANING & NORMALIZATION
+    # SECTION 2: TEXT CLEANING & NORMALIZATION
     # =========================================================================
 
     def clean_text(
@@ -190,7 +190,7 @@ class PDFService:
         return cleaned.strip()
 
     # =========================================================================
-    # STEP 18 (Part B): SENTENCE-AWARE SLIDING WINDOW CHUNKING
+    # SECTION 3: SENTENCE-AWARE SLIDING WINDOW CHUNKING
     # =========================================================================
 
     def chunk_text(

@@ -8,8 +8,7 @@ Evaluates summarization outputs using:
 4. Compression Ratio & Token Efficiency
 5. Inference Latency (Generation speed)
 
-Also satisfies Professor Criterion 14 by serializing the best model's configuration,
-weights state, and evaluation benchmark into 'best_model.pkl'.
+Serializes the best model's configuration, parameters, and evaluation benchmark into 'best_model.pkl'.
 """
 
 from __future__ import annotations

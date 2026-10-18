@@ -83,7 +83,35 @@ async def upload_pdf(
             shutil.copyfileobj(file.file, buffer)
         
         file_size = file_path.stat().st_size
+
+        if file_size == 0:
+            file_path.unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file is empty (0 bytes). Please upload a valid PDF document."
+            )
+
+        MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB limit
+        if file_size > MAX_FILE_SIZE:
+            file_path.unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=400,
+                detail=f"File exceeds maximum allowed limit of 25MB (uploaded: {round(file_size / (1024*1024), 1)}MB)."
+            )
+
+        # Validate PDF magic bytes (%PDF-)
+        with open(file_path, "rb") as check_f:
+            header = check_f.read(5)
+            if header != b"%PDF-":
+                file_path.unlink(missing_ok=True)
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid file content. The file does not have a valid PDF header (%PDF-)."
+                )
+    except HTTPException:
+        raise
     except Exception as exc:
+        file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=500,
             detail=f"Failed to save uploaded PDF: {str(exc)}"
@@ -294,7 +322,7 @@ def import_arxiv_paper(req: ArxivImportRequest):
     """
     import pymupdf
 
-    safe_title_slug = re.sub(r"[^a-zA-Z0-9_\-]+", "_", req.title.strip())[:30].strip("_")
+    safe_title_slug = re.sub(r"[^a-zA-Z0-9_\-]+", "_", req.title.strip())[:30].strip("_") or "paper"
     unique_prefix = uuid.uuid4().hex[:8]
     safe_stored_name = f"arxiv_{unique_prefix}_{safe_title_slug}.pdf"
     file_path = UPLOAD_DIR / safe_stored_name
@@ -415,7 +443,7 @@ def compare_models(
 @app.get("/best-model")
 def get_best_model_artifact():
     """
-    Returns metadata about the serialized 'best_model.pkl' artifact (Professor Criterion 14).
+    Returns metadata about the serialized 'best_model.pkl' benchmark artifact.
     """
     import pickle
     pkl_path = BASE_DIR / "best_model.pkl"
