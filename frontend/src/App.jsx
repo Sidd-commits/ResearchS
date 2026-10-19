@@ -426,8 +426,8 @@ function App() {
       {/* Navbar */}
       <nav className="navbar">
         <div className="logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} style={{ cursor: "pointer" }}>
-          <div className="logo-icon">R</div>
-          <span>ResearchS</span>
+          <img src="/logo.png" alt="ResearchS Logo" className="brand-logo-img" />
+          <span>Research<span className="brand-accent-text">S</span></span>
         </div>
 
         <div className="nav-links">
