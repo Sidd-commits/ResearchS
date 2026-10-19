@@ -2,11 +2,75 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="ResearchS — AI-Powered Research Assistant. Automated abstractive paper summarization, transformer model comparison (FLAN-T5, BART, LongT5), and interactive PDF Q&A chatbot." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- Primary Page Title -->
+    <title>ResearchS — AI-Powered Academic Research Assistant</title>
+    
+    <!-- Core SEO Meta Tags -->
+    <meta name="description" content="ResearchS is an AI-powered academic research assistant for scientific literature discovery on arXiv, automated PDF abstractive summarization, transformer benchmarking (Google FLAN-T5, Meta BART, Google LongT5), and interactive citation-grounded RAG chatbot." />
+    <meta name="keywords" content="ResearchS, AI research assistant, arXiv search, paper summarizer, abstractive summarization, transformer benchmarking, FLAN-T5, BART, LongT5, PDF chatbot, RAG question answering, scientific paper analysis, NLP, academic research" />
+    <meta name="author" content="ResearchS Team" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://researchs-frontend.onrender.com/" />
+    
+    <!-- Browser Theme & Mobile PWA Tags -->
     <meta name="theme-color" content="#4f46e5" />
-    <title>ResearchS — AI-Powered Research Paper Assistant</title>
+    <meta name="application-name" content="ResearchS" />
+    <meta name="apple-mobile-web-app-title" content="ResearchS" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Favicons & Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Open Graph (Facebook, LinkedIn, Discord, Slack) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ResearchS" />
+    <meta property="og:title" content="ResearchS — AI-Powered Academic Research Assistant" />
+    <meta property="og:description" content="Discover arXiv papers, generate abstractive multi-model summaries, benchmark FLAN-T5 vs BART vs LongT5, and interact with research papers via an interactive RAG chatbot." />
+    <meta property="og:url" content="https://researchs-frontend.onrender.com/" />
+    <meta property="og:image" content="https://researchs-frontend.onrender.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="ResearchS AI Academic Research Assistant Dashboard" />
+    
+    <!-- Twitter / X Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ResearchS — AI-Powered Academic Research Assistant" />
+    <meta name="twitter:description" content="Discover arXiv papers, generate abstractive multi-model summaries, benchmark FLAN-T5 vs BART vs LongT5, and interact with research papers via an interactive RAG chatbot." />
+    <meta name="twitter:image" content="https://researchs-frontend.onrender.com/og-image.png" />
+    <meta name="twitter:image:alt" content="ResearchS AI Academic Research Assistant Dashboard" />
+    
+    <!-- Schema.org Structured Data (JSON-LD) for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "ResearchS",
+      "alternateName": "ResearchS Academic Assistant",
+      "url": "https://researchs-frontend.onrender.com/",
+      "description": "An end-to-end NLP research platform for scientific paper discovery, automated abstractive summarization, transformer model benchmarking, and citation-grounded conversational question answering.",
+      "applicationCategory": "EducationalApplication, ResearchApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Real-time arXiv scientific paper discovery and metadata ingestion",
+        "High-performance PyMuPDF PDF text extraction and sentence-aware chunking",
+        "Abstractive summarization via Google FLAN-T5, Meta BART, and Google LongT5",
+        "Automated ROUGE-1, ROUGE-2, and ROUGE-L side-by-side comparative benchmarking",
+        "Citation-grounded interactive PDF Question Answering Chatbot (RAG)"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

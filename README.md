@@ -144,8 +144,13 @@ ResearchS/
 │   └── README.md                      # Backend service documentation
 └── frontend/
     ├── public/
+    │   ├── apple-touch-icon.png       # 180x180 iOS touch icon
     │   ├── favicon.svg                # Brand icon
-    │   └── icons.svg
+    │   ├── icons.svg                  # SVG sprite icons
+    │   ├── manifest.json              # Web App Manifest
+    │   ├── og-image.png               # 1200x630 Open Graph social preview banner
+    │   ├── robots.txt                 # Search crawler directives
+    │   └── sitemap.xml                # Canonical XML sitemap
     ├── src/
     │   ├── App.jsx                    # Reactive research dashboard component
     │   ├── index.css                  # Responsive minimalist design system

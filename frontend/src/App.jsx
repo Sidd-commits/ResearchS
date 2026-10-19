@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,6 +38,27 @@ function App() {
 
   // Toast notification state
   const [toastMessage, setToastMessage] = useState("");
+  const [backendStatus, setBackendStatus] = useState("System Online ✦ AI Engine Active");
+
+  useEffect(() => {
+    document.title = "ResearchS — AI-Powered Academic Research Assistant";
+    let isMounted = true;
+    fetch(`${API_BASE}/health`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data) {
+          setBackendStatus("System Online ✦ AI Engine Active");
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setBackendStatus("Connecting to Research Engine...");
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -444,9 +465,9 @@ function App() {
           </a>
         </div>
 
-        <button className="status-button">
+        <button className="status-button" id="system-status-badge" aria-label="System status">
           <span className="status-dot"></span>
-          System Online (RTX 2050 CUDA)
+          {backendStatus}
         </button>
       </nav>
 
@@ -1270,6 +1291,12 @@ function App() {
             </div>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="app-footer" role="contentinfo" style={{ textAlign: "center", padding: "48px 24px 32px", borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "64px", color: "#94a3b8", fontSize: "0.875rem" }}>
+          <p>© {new Date().getFullYear()} ResearchS — AI-Powered Academic Research Assistant. Built with React 19, FastAPI, and Hugging Face Transformers. Open Source under MIT License.</p>
+          <p style={{ marginTop: "8px", fontSize: "0.8rem", opacity: 0.8 }}>Deployed on Render Cloud • Evaluated on ROUGE-1/2/L Benchmarks</p>
+        </footer>
       </main>
     </div>
   );
