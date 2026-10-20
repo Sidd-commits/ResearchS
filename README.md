@@ -51,9 +51,11 @@ The application is deployed and actively running on **Render Cloud Infrastructur
   * Automatically detects constrained cloud environments (Render Free Tier 512MB RAM ceiling) to eliminate Out-Of-Memory (OOM) SIGKILL failures.
   * Executes full PyTorch CUDA GPU inference when run locally with sufficient hardware.
 
+
 ---
 
 ## 🏗️ Architecture & Data Flow
+
 
 ```text
                      ┌──────────────────────────────────────────────┐
