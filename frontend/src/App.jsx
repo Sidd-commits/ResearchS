@@ -43,20 +43,37 @@ function App() {
   useEffect(() => {
     document.title = "ResearchS — AI-Powered Academic Research Assistant";
     let isMounted = true;
-    fetch(`${API_BASE}/health`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (isMounted && data) {
-          setBackendStatus("System Online ✦ AI Engine Active");
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setBackendStatus("Connecting to Research Engine...");
-        }
-      });
+    let pollTimer = null;
+
+    const checkHealth = () => {
+      fetch(`${API_BASE}/health`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (isMounted && data) {
+            setBackendStatus("System Online ✦ AI Engine Active");
+            if (pollTimer) {
+              clearInterval(pollTimer);
+              pollTimer = null;
+            }
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setBackendStatus("Connecting to Research Engine...");
+            if (!pollTimer) {
+              pollTimer = setInterval(checkHealth, 6000);
+            }
+          }
+        });
+    };
+
+    checkHealth();
+
     return () => {
       isMounted = false;
+      if (pollTimer) {
+        clearInterval(pollTimer);
+      }
     };
   }, []);
 

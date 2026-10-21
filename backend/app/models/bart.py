@@ -51,11 +51,19 @@ class BartSummarizer:
 
             self.tokenizer = BartTokenizer.from_pretrained(self.model_name)
             torch_dtype = torch.float16 if self.device == "cuda" else torch.float32
-            self.model = BartForConditionalGeneration.from_pretrained(
-                self.model_name,
-                torch_dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-            ).to(self.device)
+            load_kwargs = {"low_cpu_mem_usage": True}
+            try:
+                self.model = BartForConditionalGeneration.from_pretrained(
+                    self.model_name,
+                    dtype=torch_dtype,
+                    **load_kwargs,
+                ).to(self.device)
+            except (TypeError, ValueError):
+                self.model = BartForConditionalGeneration.from_pretrained(
+                    self.model_name,
+                    torch_dtype=torch_dtype,
+                    **load_kwargs,
+                ).to(self.device)
             self.model.eval()
             self._is_loaded = True
             self._use_fallback = False
@@ -145,6 +153,7 @@ class BartSummarizer:
                 length_penalty=length_penalty,
                 early_stopping=True,
                 no_repeat_ngram_size=3,
+                forced_bos_token_id=0,
             )
 
         summary_text = self.tokenizer.decode(
