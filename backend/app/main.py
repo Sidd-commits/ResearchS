@@ -2,11 +2,12 @@ import logging
 import os
 import re
 import shutil
+import time
 import uuid
 from pathlib import Path
 from typing import Optional, List
 from pydantic import BaseModel
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.pdf_service import pdf_service, PDFPreprocessingError
@@ -34,10 +35,46 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Upload directory configuration
+# Security Headers Middleware (Cloudflare & OWASP Aligned)
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """
+    Enforces production security headers aligned with Cloudflare and OWASP benchmarks:
+    - Defense against MIME-sniffing, clickjacking, and XSS.
+    - Preserves FastAPI documentation (/docs, /redoc) functionality.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    if not request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+    return response
+
+# Upload directory configuration & safe retention pruning
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+def prune_old_uploads(max_files: int = 30, max_age_hours: int = 24) -> None:
+    """
+    Lean disk maintenance: prunes old temporary uploaded PDFs to prevent unbounded disk growth.
+    """
+    try:
+        pdf_files = [f for f in UPLOAD_DIR.glob("*.pdf") if f.is_file()]
+        now = time.time()
+        for f in pdf_files:
+            if now - f.stat().st_mtime > max_age_hours * 3600:
+                f.unlink(missing_ok=True)
+        remaining = sorted([f for f in UPLOAD_DIR.glob("*.pdf") if f.is_file()], key=lambda x: x.stat().st_mtime)
+        while len(remaining) > max_files:
+            oldest = remaining.pop(0)
+            oldest.unlink(missing_ok=True)
+    except Exception as exc:
+        logger.warning(f"Upload pruning skipped: {exc}")
+
+prune_old_uploads()
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
@@ -134,6 +171,8 @@ async def upload_pdf(
             "page_count": 0,
             "chunks": [],
         }
+
+    prune_old_uploads()
 
     return {
         "message": "PDF uploaded and preprocessed successfully.",
