@@ -84,8 +84,13 @@ function App() {
 
   const handleCopyText = (text, label) => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
-    showToast(`✓ ${label} copied to clipboard!`);
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => showToast(`✓ ${label} copied to clipboard!`))
+        .catch(() => showToast(`✓ ${label} copied!`));
+    } else {
+      showToast(`✓ ${label} copied!`);
+    }
   };
 
   // Helper to ensure demo paper is loaded

@@ -6,7 +6,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -75,6 +75,23 @@ def prune_old_uploads(max_files: int = 30, max_age_hours: int = 24) -> None:
         logger.warning(f"Upload pruning skipped: {exc}")
 
 prune_old_uploads()
+
+def validate_saved_filename(saved_filename: str) -> str:
+    """
+    Validates and sanitizes paper filenames:
+    - Strips directory path components to defeat path traversal (CWE-22)
+    - Enforces .pdf extension
+    - Ensures file resolves strictly within UPLOAD_DIR
+    """
+    clean_name = os.path.basename(saved_filename).strip()
+    if not clean_name or clean_name in (".", "..") or not clean_name.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Invalid paper filename format.")
+    resolved = (UPLOAD_DIR / clean_name).resolve()
+    if not resolved.is_relative_to(UPLOAD_DIR.resolve()):
+        raise HTTPException(status_code=400, detail="Path traversal detected.")
+    if not resolved.exists():
+        raise HTTPException(status_code=404, detail=f"Paper '{clean_name}' not found.")
+    return clean_name
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
@@ -193,9 +210,8 @@ def get_paper_preprocessing(
     """
     Re-runs or inspects text extraction, cleaning, and chunking with custom parameters.
     """
-    file_path = UPLOAD_DIR / os.path.basename(saved_filename)
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Requested PDF file not found.")
+    clean_name = validate_saved_filename(saved_filename)
+    file_path = UPLOAD_DIR / clean_name
 
     try:
         result = pdf_service.process_pdf(
@@ -267,7 +283,7 @@ def get_sample_demo_paper():
     }
 
 @app.get("/search-arxiv")
-def search_arxiv(query: str = Query(..., min_length=2)):
+def search_arxiv(query: str = Query(..., min_length=2, max_length=200)):
     """
     Searches arXiv API for academic research papers with fast timeout and curated fallback.
     """
@@ -345,11 +361,11 @@ def search_arxiv(query: str = Query(..., min_length=2)):
 
 
 class ArxivImportRequest(BaseModel):
-    title: str
-    summary: str
-    authors: Optional[List[str]] = []
-    published: Optional[str] = ""
-    arxiv_id: Optional[str] = ""
+    title: str = Field(..., min_length=1, max_length=500)
+    summary: str = Field(..., min_length=1, max_length=25000)
+    authors: Optional[List[str]] = Field(default_factory=list)
+    published: Optional[str] = Field(default="", max_length=100)
+    arxiv_id: Optional[str] = Field(default="", max_length=100)
 
 @app.post("/import-arxiv-paper")
 def import_arxiv_paper(req: ArxivImportRequest):
@@ -400,8 +416,8 @@ def import_arxiv_paper(req: ArxivImportRequest):
 
 
 class ChatRequest(BaseModel):
-    question: str
-    top_k: Optional[int] = 3
+    question: str = Field(..., min_length=1, max_length=1000)
+    top_k: Optional[int] = Field(default=3, ge=1, le=10)
 
 
 @app.post("/papers/{saved_filename}/chat")
@@ -411,11 +427,12 @@ def chat_with_paper(saved_filename: str, req: ChatRequest):
     Retrieves context-relevant chunks via TF-IDF and generates
     grounded answers using Google FLAN-T5.
     """
+    clean_name = validate_saved_filename(saved_filename)
     from app.services.qa_service import qa_service
 
     try:
         result = qa_service.answer_question(
-            saved_filename=saved_filename,
+            saved_filename=clean_name,
             question=req.question,
             top_k=req.top_k or 3,
         )
@@ -440,11 +457,15 @@ def summarize_paper(
     Generates an abstractive summary of an uploaded research paper
     using the specified pretrained transformer model.
     """
+    clean_name = validate_saved_filename(saved_filename)
+    if min_length > max_length:
+        raise HTTPException(status_code=400, detail="min_length cannot be greater than max_length.")
+
     from app.services.summarization_service import summarization_service
 
     try:
         result = summarization_service.summarize_single_model(
-            saved_filename=saved_filename,
+            saved_filename=clean_name,
             model_type=model_type,
             max_length=max_length,
             min_length=min_length,
@@ -452,6 +473,8 @@ def summarize_paper(
         return result
     except FileNotFoundError as err:
         raise HTTPException(status_code=404, detail=str(err))
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Summarization failed: {str(exc)}")
 
@@ -465,17 +488,23 @@ def compare_models(
     Runs both Google FLAN-T5 and Meta BART on the exact same research paper,
     compares latency and ROUGE metrics, selects the best model, and saves 'best_model.pkl'.
     """
+    clean_name = validate_saved_filename(saved_filename)
+    if min_length > max_length:
+        raise HTTPException(status_code=400, detail="min_length cannot be greater than max_length.")
+
     from app.services.summarization_service import summarization_service
 
     try:
         result = summarization_service.compare_models(
-            saved_filename=saved_filename,
+            saved_filename=clean_name,
             max_length=max_length,
             min_length=min_length,
         )
         return result
     except FileNotFoundError as err:
         raise HTTPException(status_code=404, detail=str(err))
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Model comparison failed: {str(exc)}")
 

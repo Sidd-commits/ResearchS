@@ -8,6 +8,7 @@ uploaded research paper chunks using TF-IDF ranking and Google FLAN-T5.
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
 from pathlib import Path
@@ -48,9 +49,10 @@ class QAService:
         if not cleaned_question:
             raise ValueError("Question cannot be empty.")
 
-        file_path = self.upload_dir / saved_filename
+        safe_filename = os.path.basename(saved_filename).strip()
+        file_path = self.upload_dir / safe_filename
         if not file_path.exists():
-            raise FileNotFoundError(f"Paper '{saved_filename}' not found.")
+            raise FileNotFoundError(f"Paper '{safe_filename}' not found.")
 
         # Process PDF to get structured chunks
         processed = pdf_service.process_pdf(file_path)
