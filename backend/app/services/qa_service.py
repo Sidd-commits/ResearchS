@@ -127,6 +127,7 @@ class QAService:
                     "model": "Google FLAN-T5 (RAG Grounded)",
                 }
 
+            raw_answer = ""
             try:
                 flan_t5_summarizer.load_model()
 

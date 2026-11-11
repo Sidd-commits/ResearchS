@@ -298,7 +298,8 @@ function App() {
 
       const data = await response.json();
       setSingleSummaryResult(data);
-      showToast(`${modelType === "flan-t5" ? "FLAN-T5" : "BART"} summary generated!`);
+      const modelDisplayName = modelType === "flan-t5" ? "FLAN-T5" : modelType === "long-t5" ? "LongT5" : "BART";
+      showToast(`${modelDisplayName} summary generated!`);
     } catch (err) {
       setSingleSummaryError(err.message || "Failed to generate summary.");
     } finally {

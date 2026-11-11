@@ -148,7 +148,7 @@ class FlanT5Summarizer:
                 inputs["input_ids"],
                 attention_mask=inputs.get("attention_mask"),
                 max_length=max_length,
-                min_length=max(min_length, 45),
+                min_length=min(min_length, max_length),
                 num_beams=num_beams,
                 length_penalty=1.6,
                 early_stopping=True,
