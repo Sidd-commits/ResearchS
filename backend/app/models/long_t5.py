@@ -173,23 +173,32 @@ class LongT5Summarizer:
             truncation=True,
         ).to(self.device)
 
-        with torch.no_grad():
-            summary_ids = self.model.generate(
-                inputs["input_ids"],
-                attention_mask=inputs.get("attention_mask"),
-                max_length=max_length,
-                min_length=min_length,
-                num_beams=num_beams,
-                length_penalty=length_penalty,
-                early_stopping=True,
-                no_repeat_ngram_size=3,
-            )
+        try:
+            with torch.no_grad():
+                summary_ids = self.model.generate(
+                    inputs["input_ids"],
+                    attention_mask=inputs.get("attention_mask"),
+                    max_length=max_length,
+                    min_length=min(min_length, max_length),
+                    num_beams=num_beams,
+                    length_penalty=length_penalty,
+                    early_stopping=True,
+                    no_repeat_ngram_size=3,
+                )
 
-        summary_text = self.tokenizer.decode(
-            summary_ids[0],
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=True,
-        ).strip()
+            summary_text = self.tokenizer.decode(
+                summary_ids[0],
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=True,
+            ).strip()
+        except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
+            logger.warning(f"CUDA memory pressure or generation error in LongT5 ({exc}). Purging cache and activating resilient fallback.")
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            import re
+            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if len(s.strip()) > 30]
+            selected = sentences[:5] if len(sentences) >= 5 else sentences
+            summary_text = " ".join(selected)
 
         # Clean prefix if echoed by base model
         if summary_text.lower().startswith("summarize:"):

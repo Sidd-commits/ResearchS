@@ -158,23 +158,31 @@ class QAService:
                     truncation=True,
                 ).to(device)
 
-                with torch.no_grad():
-                    output_ids = model.generate(
-                        inputs["input_ids"],
-                        attention_mask=inputs.get("attention_mask"),
-                        max_length=180,
-                        min_length=20,
-                        num_beams=3,
-                        length_penalty=1.2,
-                        early_stopping=True,
-                        no_repeat_ngram_size=3,
-                    )
+                try:
+                    with torch.no_grad():
+                        output_ids = model.generate(
+                            inputs["input_ids"],
+                            attention_mask=inputs.get("attention_mask"),
+                            max_length=180,
+                            min_length=min(20, 180),
+                            num_beams=3,
+                            length_penalty=1.2,
+                            early_stopping=True,
+                            no_repeat_ngram_size=3,
+                        )
 
-                raw_answer = tokenizer.decode(
-                    output_ids[0],
-                    skip_special_tokens=True,
-                    clean_up_tokenization_spaces=True,
-                ).strip()
+                    raw_answer = tokenizer.decode(
+                        output_ids[0],
+                        skip_special_tokens=True,
+                        clean_up_tokenization_spaces=True,
+                    ).strip()
+                except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
+                    logger.warning(f"CUDA memory pressure or generation error in QAService ({exc}). Falling back to extracted context.")
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                    first_snippet = retrieved_snippets[0] if retrieved_snippets else "Context answer unavailable."
+                    sentences = [s.strip() for s in first_snippet.split(". ") if len(s.strip()) > 20]
+                    raw_answer = (". ".join(sentences[:2]) + ".") if sentences else first_snippet[:220]
 
             finally:
                 # Immediate VRAM purging to preserve GPU stability

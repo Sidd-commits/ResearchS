@@ -57,10 +57,15 @@ def is_constrained_environment() -> bool:
     if sys.platform.startswith("linux") and bool(os.getenv("PORT")):
         return True
 
-    # 5. Fallback memory check using psutil if available
+    # 5. Host memory check using psutil:
+    # If total system RAM < 4GB or currently available RAM < 1.5GB, activate constrained mode
+    # to safeguard against Windows OS Error 1455 / Linux OOM SIGKILL (exit code 137).
     try:
         import psutil
-        if (psutil.virtual_memory().total / (1024 ** 3)) < 2.0:
+        vm = psutil.virtual_memory()
+        avail_gb = vm.available / (1024 ** 3)
+        total_gb = vm.total / (1024 ** 3)
+        if total_gb < 4.0 or avail_gb < 1.5:
             return True
     except Exception:
         pass

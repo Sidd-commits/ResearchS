@@ -143,23 +143,32 @@ class FlanT5Summarizer:
             truncation=True,
         ).to(self.device)
 
-        with torch.no_grad():
-            summary_ids = self.model.generate(
-                inputs["input_ids"],
-                attention_mask=inputs.get("attention_mask"),
-                max_length=max_length,
-                min_length=min(min_length, max_length),
-                num_beams=num_beams,
-                length_penalty=1.6,
-                early_stopping=True,
-                no_repeat_ngram_size=3,
-            )
+        try:
+            with torch.no_grad():
+                summary_ids = self.model.generate(
+                    inputs["input_ids"],
+                    attention_mask=inputs.get("attention_mask"),
+                    max_length=max_length,
+                    min_length=min(min_length, max_length),
+                    num_beams=num_beams,
+                    length_penalty=1.6,
+                    early_stopping=True,
+                    no_repeat_ngram_size=3,
+                )
 
-        summary_text = self.tokenizer.decode(
-            summary_ids[0],
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=True,
-        )
+            summary_text = self.tokenizer.decode(
+                summary_ids[0],
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=True,
+            )
+        except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
+            logger.warning(f"CUDA memory pressure or generation error in FLAN-T5 ({exc}). Purging cache and activating resilient fallback.")
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            import re
+            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if len(s.strip()) > 30]
+            summary_sentences = sentences[:3] if len(sentences) >= 3 else sentences
+            summary_text = " ".join(summary_sentences)
 
         latency = round(time.time() - start_time, 2)
         words = len(summary_text.split())
