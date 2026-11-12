@@ -1,5 +1,33 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  Search,
+  Zap,
+  FileText,
+  MessageSquare,
+  UploadCloud,
+  Sparkles,
+  Check,
+  Copy,
+  X,
+  AlertTriangle,
+  Send,
+  Trophy,
+  Clock,
+  Database,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
+  User,
+  Bot,
+  Calendar,
+  Layers,
+  SlidersHorizontal,
+  Cpu,
+  BookOpen,
+} from "lucide-react";
+
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [arxivLoading, setArxivLoading] = useState(false);
@@ -9,13 +37,16 @@ function App() {
   const fileInputRef = useRef(null);
   const searchInputRef = useRef(null);
   const workspaceRef = useRef(null);
+  const chatEndRef = useRef(null);
 
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadedPaper, setUploadedPaper] = useState(null);
   const [uploadError, setUploadError] = useState("");
   const [showPreprocessedDetails, setShowPreprocessedDetails] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
-  // Active Tool Mode: 'compare' | 'single'
+  // Active Tool Mode: 'compare' | 'single' | 'chat'
   const [activeToolMode, setActiveToolMode] = useState("compare");
 
   // Single Model state
@@ -77,13 +108,24 @@ function App() {
     };
   }, []);
 
+  // Smooth scroll to bottom of chat when messages update
+  useEffect(() => {
+    if (activeToolMode === "chat") {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages, chatLoading, activeToolMode]);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 2500);
   };
 
-  const handleCopyText = (text, label) => {
+  const handleCopyText = (text, label, id = null) => {
     if (!text) return;
+    if (id) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(text)
         .then(() => showToast(`✓ ${label} copied to clipboard!`))
@@ -208,12 +250,7 @@ function App() {
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
+  const processSelectedFile = async (file) => {
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith(".pdf")) {
@@ -252,7 +289,37 @@ function App() {
       setUploadError(err.message || "Failed to connect to backend server.");
     } finally {
       setUploadLoading(false);
-      event.target.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (file) processSelectedFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      processSelectedFile(files[0]);
     }
   };
 
@@ -460,21 +527,21 @@ function App() {
             onClick={handleRunModelComparison}
             title="Compare FLAN-T5, BART, and LongT5 side-by-side"
           >
-            ⚡ Compare Models
+            <Zap size={14} className="nav-icon" /> Compare Models
           </button>
           <button
             className="nav-text-btn"
             onClick={() => handleRunSingleSummarize("bart")}
             title="Generate single abstractive summary"
           >
-            📝 Summarizer
+            <FileText size={14} className="nav-icon" /> Summarizer
           </button>
           <button
             className="nav-text-btn"
             onClick={handleOpenChatbot}
             title="Chat interactively with research paper"
           >
-            💬 Research Chatbot
+            <MessageSquare size={14} className="nav-icon" /> Research Chatbot
           </button>
           <a
             href="#search-box-input"
@@ -484,7 +551,7 @@ function App() {
               searchInputRef.current?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            🔍 arXiv Search
+            <Search size={14} className="nav-icon" /> arXiv Search
           </a>
         </div>
 
@@ -496,9 +563,14 @@ function App() {
 
       {/* Main Section */}
       <main id="home">
-        <section className="hero">
+        <section
+          className={`hero drag-drop-zone ${isDragging ? "dragging" : ""}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <div className="hero-badge">
-            <span>✦</span>
+            <Sparkles size={13} className="hero-badge-icon" />
             AI-Powered Research Assistant (Hugging Face Transformers)
           </div>
 
@@ -516,10 +588,7 @@ function App() {
           <div className="search-container">
             <div className="search-box">
               <span className="search-icon" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
+                <Search size={18} />
               </span>
 
               <input
@@ -542,6 +611,14 @@ function App() {
             </div>
           </div>
 
+          {/* Drag Overlay Hint */}
+          {isDragging && (
+            <div className="drag-active-overlay">
+              <UploadCloud size={36} className="text-indigo-400" />
+              <p>Drop your academic research PDF here to upload</p>
+            </div>
+          )}
+
           {/* arXiv Search Results */}
           {arxivLoading && (
             <div className="upload-loading-banner" style={{ marginTop: "16px" }}>
@@ -552,9 +629,9 @@ function App() {
 
           {arxivError && (
             <div className="upload-error-banner" style={{ marginTop: "16px" }}>
-              <span>⚠</span>
+              <AlertTriangle size={15} />
               <span>{arxivError}</span>
-              <button onClick={() => setArxivError("")}>✕</button>
+              <button onClick={() => setArxivError("")}><X size={14} /></button>
             </div>
           )}
 
@@ -562,12 +639,15 @@ function App() {
             <div className="arxiv-results-panel">
               <div className="arxiv-results-header">
                 <h3>Papers found on arXiv for "{searchQuery}" ({arxivResults.length})</h3>
-                <button onClick={() => setArxivResults([])}>✕ Close</button>
+                <button onClick={() => setArxivResults([])}><X size={14} /> Close</button>
               </div>
               <div className="arxiv-cards-grid">
                 {arxivResults.map((paper, idx) => (
                   <div key={idx} className="arxiv-card">
-                    <span className="arxiv-date">{paper.published}</span>
+                    <span className="arxiv-date">
+                      <Calendar size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                      {paper.published}
+                    </span>
                     <h4>{paper.title}</h4>
                     <p className="arxiv-authors">By {paper.authors.join(", ")}</p>
                     <p className="arxiv-abstract">{paper.summary.slice(0, 180)}...</p>
@@ -580,7 +660,7 @@ function App() {
                         disabled={uploadLoading || modelSummarizing}
                         title="Analyze and compare FLAN-T5 vs BART on this specific arXiv paper"
                       >
-                        ⚡ Compare Models
+                        <Zap size={13} /> Compare Models
                       </button>
                       <button
                         className="arxiv-summary-btn"
@@ -588,7 +668,7 @@ function App() {
                         disabled={uploadLoading || singleSummarizing}
                         title="Generate summary of this specific arXiv paper"
                       >
-                        📝 Summarize
+                        <FileText size={13} /> Summarize
                       </button>
                       <button
                         className="arxiv-chat-btn"
@@ -596,7 +676,7 @@ function App() {
                         disabled={uploadLoading}
                         title="Chat interactively with this specific arXiv paper"
                       >
-                        💬 Chat
+                        <MessageSquare size={13} /> Chat
                       </button>
                     </div>
                   </div>
@@ -613,7 +693,7 @@ function App() {
               disabled={modelSummarizing || uploadLoading}
               title="Executes FLAN-T5 vs BART vs LongT5 comparison side-by-side"
             >
-              <span>⚡</span>
+              <Zap size={15} />
               {modelSummarizing ? "Running Transformers..." : "Compare Models (FLAN-T5 vs BART vs LongT5)"}
             </button>
 
@@ -623,7 +703,7 @@ function App() {
               disabled={singleSummarizing || uploadLoading}
               title="Generates abstractive summary using FLAN-T5, BART, or LongT5"
             >
-              <span>📝</span>
+              <FileText size={15} />
               {singleSummarizing ? "Summarizing..." : "Smart Summary"}
             </button>
 
@@ -633,17 +713,17 @@ function App() {
               disabled={uploadLoading}
               title="Ask questions and get grounded answers from the paper"
             >
-              <span>💬</span>
+              <MessageSquare size={15} />
               Ask Paper (Q&A)
             </button>
 
             <button
-              className="secondary-button"
+              className="secondary-button upload-trigger-btn"
               onClick={handleUploadClick}
               disabled={uploadLoading}
               title="Upload your own research paper (.pdf)"
             >
-              <span>↑</span>
+              <UploadCloud size={15} />
               {uploadLoading ? "Processing..." : "Upload Custom PDF"}
             </button>
 
@@ -653,7 +733,7 @@ function App() {
               disabled={uploadLoading}
               title="Loads the sample NLP research paper for testing"
             >
-              <span>✦</span>
+              <Sparkles size={15} />
               Demo Paper
             </button>
 
@@ -676,9 +756,9 @@ function App() {
 
           {uploadError && (
             <div className="upload-error-banner">
-              <span>⚠</span>
+              <AlertTriangle size={15} />
               <span>{uploadError}</span>
-              <button onClick={() => setUploadError("")}>✕</button>
+              <button onClick={() => setUploadError("")}><X size={14} /></button>
             </div>
           )}
 
@@ -686,7 +766,9 @@ function App() {
           {uploadedPaper && (
             <div className="uploaded-container" ref={workspaceRef}>
               <div className="uploaded-card">
-                <div className="uploaded-card-icon">📄</div>
+                <div className="uploaded-card-icon">
+                  <FileText size={22} className="text-indigo-400" />
+                </div>
                 <div className="uploaded-card-info">
                   <h4>{uploadedPaper.filename}</h4>
                   <p>
@@ -695,7 +777,10 @@ function App() {
                       <> • Pages: <strong>{uploadedPaper.preprocessing.page_count}</strong></>
                     ) : null}
                     {" "}• Status:{" "}
-                    <span className="success-tag">✓ Extracted & Preprocessed (PyMuPDF)</span>
+                    <span className="success-tag">
+                      <Check size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />
+                      Extracted & Preprocessed (PyMuPDF)
+                    </span>
                   </p>
                 </div>
                 <button
@@ -708,7 +793,7 @@ function App() {
                   }}
                   title="Remove paper"
                 >
-                  ✕
+                  <X size={15} />
                 </button>
               </div>
 
@@ -717,23 +802,35 @@ function App() {
                 <div className="preprocessing-details">
                   <div className="metrics-grid">
                     <div className="metric-box">
-                      <span className="metric-label">Extraction Engine</span>
+                      <span className="metric-label">
+                        <Cpu size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "5px" }} />
+                        Extraction Engine
+                      </span>
                       <span className="metric-value">{uploadedPaper.preprocessing.extractor}</span>
                     </div>
                     <div className="metric-box">
-                      <span className="metric-label">Cleaned Words</span>
+                      <span className="metric-label">
+                        <FileText size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "5px" }} />
+                        Cleaned Words
+                      </span>
                       <span className="metric-value">
                         {uploadedPaper.preprocessing.cleaned_metrics?.word_count?.toLocaleString() || "—"}
                       </span>
                     </div>
                     <div className="metric-box">
-                      <span className="metric-label">Noise Cleaned</span>
+                      <span className="metric-label">
+                        <Layers size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "5px" }} />
+                        Noise Cleaned
+                      </span>
                       <span className="metric-value highlight-green">
                         {uploadedPaper.preprocessing.cleaned_metrics?.noise_reduction_pct || 0}%
                       </span>
                     </div>
                     <div className="metric-box">
-                      <span className="metric-label">Chunks Created</span>
+                      <span className="metric-label">
+                        <SlidersHorizontal size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "5px" }} />
+                        Chunks Created
+                      </span>
                       <span className="metric-value highlight-purple">
                         {uploadedPaper.preprocessing.chunking?.total_chunks || 0}
                       </span>
@@ -745,7 +842,11 @@ function App() {
                       className="preview-toggle-btn"
                       onClick={() => setShowPreprocessedDetails(!showPreprocessedDetails)}
                     >
-                      {showPreprocessedDetails ? "Hide Preprocessed Chunks ▲" : "Inspect Cleaned Text & Chunks ▼"}
+                      {showPreprocessedDetails ? (
+                        <><ChevronUp size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Hide Preprocessed Chunks</>
+                      ) : (
+                        <><ChevronDown size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Inspect Cleaned Text & Chunks</>
+                      )}
                     </button>
                   </div>
 
@@ -788,23 +889,23 @@ function App() {
                       className={`tool-tab-btn ${activeToolMode === "compare" ? "active" : ""}`}
                       onClick={() => setActiveToolMode("compare")}
                     >
-                      ⚡ Compare Models (FLAN-T5 vs BART vs LongT5)
+                      <Zap size={14} /> Compare Models (FLAN-T5 vs BART vs LongT5)
                     </button>
                     <button
                       className={`tool-tab-btn ${activeToolMode === "single" ? "active" : ""}`}
                       onClick={() => setActiveToolMode("single")}
                     >
-                      📝 Single Model Summarizer
+                      <FileText size={14} /> Single Model Summarizer
                     </button>
                     <button
                       className={`tool-tab-btn ${activeToolMode === "chat" ? "active" : ""}`}
                       onClick={() => setActiveToolMode("chat")}
                     >
-                      💬 Chat with Paper (Q&A)
+                      <MessageSquare size={14} /> Chat with Paper (Q&A)
                     </button>
                   </div>
 
-                      {/* MODE 1: MODEL COMPARISON */}
+                  {/* MODE 1: MODEL COMPARISON */}
                   {activeToolMode === "compare" && (
                     <div className="mode-content-box">
                       <div className="model-comparison-trigger">
@@ -813,7 +914,7 @@ function App() {
                           onClick={handleRunModelComparison}
                           disabled={modelSummarizing}
                         >
-                          <span>⚡</span>
+                          <Zap size={16} />
                           {modelSummarizing
                             ? "Benchmarking 3 Transformer Models on GPU..."
                             : "Run 3-Model Comparison (FLAN-T5 vs. BART vs. LongT5)"}
@@ -831,9 +932,9 @@ function App() {
 
                       {summaryError && (
                         <div className="upload-error-banner" style={{ marginTop: "12px" }}>
-                          <span>⚠</span>
+                          <AlertTriangle size={15} />
                           <span>{summaryError}</span>
-                          <button onClick={() => setSummaryError("")}>✕</button>
+                          <button onClick={() => setSummaryError("")}><X size={14} /></button>
                         </div>
                       )}
 
@@ -843,7 +944,7 @@ function App() {
                           {/* Winner / Criterion 14 Banner */}
                           <div className="winner-banner">
                             <div className="winner-title">
-                              <span className="winner-trophy">🏆</span>
+                              <span className="winner-trophy"><Trophy size={32} className="trophy-gold" /></span>
                               <div>
                                 <span className="winner-label">EVALUATED BEST MODEL (CRITERION 14)</span>
                                 <h4>{modelComparisonResult.comparison.best_overall_model}</h4>
@@ -851,9 +952,12 @@ function App() {
                             </div>
                             <p className="winner-reason">{modelComparisonResult.comparison.selection_reason}</p>
                             <div className="pkl-tag">
-                              <span>💾 Serialized Artifact Checkpoint:</span>
+                              <span><Database size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "5px" }} /> Serialized Artifact Checkpoint:</span>
                               <code>{modelComparisonResult.comparison.best_model_pkl_saved}</code>
-                              <span className="success-tag">✓ Exported best_model.pkl</span>
+                              <span className="success-tag">
+                                <Check size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />
+                                Exported best_model.pkl
+                              </span>
                             </div>
                           </div>
 
@@ -864,11 +968,21 @@ function App() {
                               <div className="model-result-card flan-card">
                                 <div className="model-card-header">
                                   <h4 className="model-card-title">Google FLAN-T5</h4>
-                                  <span className="speed-badge">⏱ {modelComparisonResult.models.flan_t5.latency_seconds}s</span>
+                                  <span className="speed-badge">
+                                    <Clock size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                                    {modelComparisonResult.models.flan_t5.latency_seconds}s
+                                  </span>
                                 </div>
 
                                 <div className="model-card-body">
                                   <p className="model-summary-text">{modelComparisonResult.models.flan_t5.summary}</p>
+                                  <button
+                                    className={`copy-summary-btn ${copiedId === "comp-flan" ? "copied" : ""}`}
+                                    onClick={() => handleCopyText(modelComparisonResult.models.flan_t5.summary, "Google FLAN-T5 summary", "comp-flan")}
+                                    title="Copy summary text"
+                                  >
+                                    {copiedId === "comp-flan" ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+                                  </button>
                                 </div>
 
                                 <div className="model-card-metrics">
@@ -889,11 +1003,21 @@ function App() {
                               <div className="model-result-card bart-card best-model-card">
                                 <div className="model-card-header">
                                   <h4 className="model-card-title">Meta BART</h4>
-                                  <span className="speed-badge">⏱ {modelComparisonResult.models.bart.latency_seconds}s</span>
+                                  <span className="speed-badge">
+                                    <Clock size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                                    {modelComparisonResult.models.bart.latency_seconds}s
+                                  </span>
                                 </div>
 
                                 <div className="model-card-body">
                                   <p className="model-summary-text">{modelComparisonResult.models.bart.summary}</p>
+                                  <button
+                                    className={`copy-summary-btn ${copiedId === "comp-bart" ? "copied" : ""}`}
+                                    onClick={() => handleCopyText(modelComparisonResult.models.bart.summary, "Meta BART summary", "comp-bart")}
+                                    title="Copy summary text"
+                                  >
+                                    {copiedId === "comp-bart" ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+                                  </button>
                                 </div>
 
                                 <div className="model-card-metrics">
@@ -914,11 +1038,21 @@ function App() {
                               <div className="model-result-card longt5-card">
                                 <div className="model-card-header">
                                   <h4 className="model-card-title">Google LongT5</h4>
-                                  <span className="speed-badge">⏱ {modelComparisonResult.models.long_t5.latency_seconds}s</span>
+                                  <span className="speed-badge">
+                                    <Clock size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                                    {modelComparisonResult.models.long_t5.latency_seconds}s
+                                  </span>
                                 </div>
 
                                 <div className="model-card-body">
                                   <p className="model-summary-text">{modelComparisonResult.models.long_t5.summary}</p>
+                                  <button
+                                    className={`copy-summary-btn ${copiedId === "comp-longt5" ? "copied" : ""}`}
+                                    onClick={() => handleCopyText(modelComparisonResult.models.long_t5.summary, "Google LongT5 summary", "comp-longt5")}
+                                    title="Copy summary text"
+                                  >
+                                    {copiedId === "comp-longt5" ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+                                  </button>
                                 </div>
 
                                 <div className="model-card-metrics">
@@ -950,21 +1084,46 @@ function App() {
                   {activeToolMode === "single" && (
                     <div className="mode-content-box single-model-box">
                       <div className="single-model-controls">
-                        <div className="control-group">
-                          <label>Choose Transformer Model:</label>
-                          <select
-                            value={singleModel}
-                            onChange={(e) => setSingleModel(e.target.value)}
-                            className="model-select"
-                          >
-                            <option value="flan-t5">Google FLAN-T5 (google/flan-t5-base) — Fast Instruction Seq2Seq</option>
-                            <option value="bart">Meta BART (facebook/bart-large-cnn) — Deep Abstractive Synthesis</option>
-                            <option value="long-t5">Google LongT5 (google/long-t5-tglobal-base) — Long Context (4096 Tokens)</option>
-                          </select>
-                          <div className="model-helper-note">
-                            {singleModel === "flan-t5" && "✦ Google FLAN-T5 (250M params): Instruction-tuned Seq2Seq • Focused factual extraction (1,024 token window)"}
-                            {singleModel === "bart" && "✦ Meta BART (406M params): Denoising Autoencoder • Fine-tuned on CNN/DailyMail for rich abstractive narrative"}
-                            {singleModel === "long-t5" && "✦ Google LongT5 (250M params): Transient Global Attention • Digests up to 8 chunks (~2,500 words / 4,096 tokens)"}
+                        <div className="control-group" style={{ width: "100%" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <SlidersHorizontal size={14} className="text-indigo-400" />
+                            Select Pretrained Transformer Architecture:
+                          </label>
+
+                          {/* Interactive Segmented Model Cards */}
+                          <div className="model-cards-selector">
+                            <div
+                              className={`model-option-card ${singleModel === "flan-t5" ? "selected" : ""}`}
+                              onClick={() => setSingleModel("flan-t5")}
+                            >
+                              <div className="model-option-header">
+                                <span className="model-option-title"><Zap size={14} className="text-indigo-400" /> Google FLAN-T5</span>
+                                <span className="model-param-badge">250M params</span>
+                              </div>
+                              <p className="model-option-desc">Instruction Seq2Seq • Concise, factual extraction</p>
+                            </div>
+
+                            <div
+                              className={`model-option-card ${singleModel === "bart" ? "selected" : ""}`}
+                              onClick={() => setSingleModel("bart")}
+                            >
+                              <div className="model-option-header">
+                                <span className="model-option-title"><FileText size={14} className="text-emerald-400" /> Meta BART</span>
+                                <span className="model-param-badge">406M params</span>
+                              </div>
+                              <p className="model-option-desc">Denoising Autoencoder • Rich abstractive narrative</p>
+                            </div>
+
+                            <div
+                              className={`model-option-card ${singleModel === "long-t5" ? "selected" : ""}`}
+                              onClick={() => setSingleModel("long-t5")}
+                            >
+                              <div className="model-option-header">
+                                <span className="model-option-title"><Sparkles size={14} className="text-sky-400" /> Google LongT5</span>
+                                <span className="model-param-badge">4096 tokens</span>
+                              </div>
+                              <p className="model-option-desc">TGlobal Attention • Multi-chunk extended context</p>
+                            </div>
                           </div>
                         </div>
 
@@ -972,8 +1131,10 @@ function App() {
                           className="compare-models-cta"
                           onClick={() => handleRunSingleSummarize()}
                           disabled={singleSummarizing}
+                          style={{ marginTop: "12px", width: "100%" }}
                         >
-                          {singleSummarizing ? "Summarizing..." : `Generate Summary with ${singleModel === "flan-t5" ? "FLAN-T5" : singleModel === "bart" ? "BART" : "LongT5"}`}
+                          <FileText size={15} />
+                          {singleSummarizing ? "Summarizing with Transformers..." : `Generate Summary with ${singleModel === "flan-t5" ? "Google FLAN-T5" : singleModel === "bart" ? "Meta BART" : "Google LongT5"}`}
                         </button>
                       </div>
 
@@ -990,9 +1151,9 @@ function App() {
 
                       {singleSummaryError && (
                         <div className="upload-error-banner" style={{ marginTop: "12px" }}>
-                          <span>⚠</span>
+                          <AlertTriangle size={15} />
                           <span>{singleSummaryError}</span>
-                          <button onClick={() => setSingleSummaryError("")}>✕</button>
+                          <button onClick={() => setSingleSummaryError("")}><X size={14} /></button>
                         </div>
                       )}
 
@@ -1003,17 +1164,20 @@ function App() {
                               <h4>{singleSummaryResult.model} Summary</h4>
                               <span className="model-arch-badge">{singleSummaryResult.architecture || singleSummaryResult.model}</span>
                             </div>
-                            <span className="speed-badge">⏱ {singleSummaryResult.latency_seconds}s</span>
+                            <span className="speed-badge">
+                              <Clock size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                              {singleSummaryResult.latency_seconds}s
+                            </span>
                           </div>
 
                           <div className="model-summary-box" style={{ marginTop: "12px" }}>
                             <p className="single-summary-text">{singleSummaryResult.summary}</p>
                             <button
-                              className="copy-summary-btn"
-                              onClick={() => handleCopyText(singleSummaryResult.summary, `${singleSummaryResult.model} summary`)}
+                              className={`copy-summary-btn ${copiedId === "single-summary" ? "copied" : ""}`}
+                              onClick={() => handleCopyText(singleSummaryResult.summary, `${singleSummaryResult.model} summary`, "single-summary")}
                               title="Copy summary text"
                             >
-                              📋 Copy
+                              {copiedId === "single-summary" ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
                             </button>
                           </div>
 
@@ -1058,7 +1222,7 @@ function App() {
                       <div className="chat-interface-card">
                         <div className="chat-card-header">
                           <div className="chat-header-title">
-                            <span className="chat-icon">💬</span>
+                            <span className="chat-icon"><MessageSquare size={18} className="text-indigo-400" /></span>
                             <div>
                               <h4>Research Paper Assistant (Context-Aware Q&A)</h4>
                               <span className="model-arch-badge">TF-IDF Chunk Retrieval + Google FLAN-T5 (RAG)</span>
@@ -1071,7 +1235,8 @@ function App() {
                                 onClick={() => setChatMessages([])}
                                 title="Clear conversation"
                               >
-                                Clear Chat ✕
+                                <RotateCcw size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                                Clear Chat
                               </button>
                             )}
                           </div>
@@ -1103,7 +1268,7 @@ function App() {
                         <div className="chat-messages-container">
                           {chatMessages.length === 0 ? (
                             <div className="chat-empty-state">
-                              <span className="chat-empty-icon">🤖</span>
+                              <Bot size={40} className="chat-empty-icon text-indigo-400" />
                               <h4>Ask anything about {uploadedPaper.filename}</h4>
                               <p>
                                 Questions are answered with evidence directly retrieved from the paper's sentence-aware chunks using instruction-tuned Google FLAN-T5.
@@ -1113,13 +1278,16 @@ function App() {
                             chatMessages.map((msg, index) => (
                               <div key={index} className={`chat-message-row ${msg.role}`}>
                                 <div className="chat-avatar">
-                                  {msg.role === "user" ? "👤" : "⚡"}
+                                  {msg.role === "user" ? <User size={15} /> : <Zap size={15} />}
                                 </div>
                                 <div className="chat-bubble">
                                   <div className="chat-bubble-header">
                                     <span className="sender-name">{msg.role === "user" ? "You" : "ResearchS AI"}</span>
                                     {msg.latency_seconds && (
-                                      <span className="chat-latency">⏱ {msg.latency_seconds}s</span>
+                                      <span className="chat-latency">
+                                        <Clock size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />
+                                        {msg.latency_seconds}s
+                                      </span>
                                     )}
                                   </div>
                                   <div className="chat-bubble-body">
@@ -1128,16 +1296,17 @@ function App() {
                                   {msg.role === "assistant" && (
                                     <div className="chat-bubble-footer">
                                       <button
-                                        className="chat-copy-btn"
-                                        onClick={() => handleCopyText(msg.text, "Answer")}
+                                        className={`chat-copy-btn ${copiedId === `chat-${index}` ? "copied" : ""}`}
+                                        onClick={() => handleCopyText(msg.text, "Answer", `chat-${index}`)}
                                       >
-                                        📋 Copy
+                                        {copiedId === `chat-${index}` ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
                                       </button>
 
                                       {msg.referenced_chunks && msg.referenced_chunks.length > 0 && (
                                         <details className="chat-citations-details">
                                           <summary>
-                                            🔍 Cited Chunks ({msg.referenced_chunks.length})
+                                            <BookOpen size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                                            Cited Chunks ({msg.referenced_chunks.length})
                                           </summary>
                                           <div className="citations-list">
                                             {msg.referenced_chunks.map((ref, idx) => (
@@ -1161,7 +1330,7 @@ function App() {
 
                           {chatLoading && (
                             <div className="chat-message-row assistant">
-                              <div className="chat-avatar">⚡</div>
+                              <div className="chat-avatar"><Zap size={15} /></div>
                               <div className="chat-bubble loading">
                                 <div className="chat-typing-indicator">
                                   <span></span>
@@ -1172,13 +1341,15 @@ function App() {
                               </div>
                             </div>
                           )}
+
+                          <div ref={chatEndRef} />
                         </div>
 
                         {chatError && (
                           <div className="upload-error-banner" style={{ margin: "10px 16px" }}>
-                            <span>⚠</span>
+                            <AlertTriangle size={15} />
                             <span>{chatError}</span>
-                            <button onClick={() => setChatError("")}>✕</button>
+                            <button onClick={() => setChatError("")}><X size={14} /></button>
                           </div>
                         )}
 
@@ -1198,7 +1369,8 @@ function App() {
                             disabled={chatLoading || !chatInput.trim()}
                             title="Send question"
                           >
-                            {chatLoading ? "..." : "Send ➤"}
+                            <Send size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                            {chatLoading ? "..." : "Send"}
                           </button>
                         </form>
                       </div>
@@ -1230,7 +1402,7 @@ function App() {
               }}
               title="Click to search arXiv"
             >
-              <div className="feature-icon purple">⌕</div>
+              <div className="feature-icon purple"><Search size={22} /></div>
               <h3>Search Papers</h3>
               <p>
                 Discover research papers directly from arXiv using topics,
@@ -1244,7 +1416,7 @@ function App() {
               onClick={() => handleRunSingleSummarize("flan-t5")}
               title="Click to generate Single Model Summary"
             >
-              <div className="feature-icon blue">▤</div>
+              <div className="feature-icon blue"><FileText size={22} /></div>
               <h3>Smart Summaries</h3>
               <p>
                 Generate high-quality abstractive summaries using Google FLAN-T5 or Meta BART.
@@ -1257,7 +1429,7 @@ function App() {
               onClick={handleRunModelComparison}
               title="Click to run 3-Model Comparison (FLAN-T5 vs BART vs LongT5)"
             >
-              <div className="feature-icon green">✦</div>
+              <div className="feature-icon green"><Zap size={22} /></div>
               <h3>Model Comparison</h3>
               <p>
                 Compare FLAN-T5, BART, and LongT5 side-by-side with ROUGE-1, ROUGE-2, and latency benchmarks.
@@ -1270,7 +1442,7 @@ function App() {
               onClick={handleOpenChatbot}
               title="Click to open Research Chatbot"
             >
-              <div className="feature-icon orange">💬</div>
+              <div className="feature-icon orange"><MessageSquare size={22} /></div>
               <h3>Research Chatbot</h3>
               <p>
                 Ask questions about your uploaded research paper and receive
